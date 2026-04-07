@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useMemo, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 
 type SectionId = "home" | "gallery" | "contact" | "pricing" | "team";
 
@@ -16,10 +16,12 @@ type Project = {
   title: string;
   summary: string;
   note: string;
+  outcome: string;
   year: string;
   sector: string;
   client: string;
   tags: string[];
+  metrics: string[];
   accent: string;
   height: string;
   slides: Slide[];
@@ -29,20 +31,35 @@ type TeamMember = {
   name: string;
   role: string;
   note: string;
+  credentials: string[];
+  links: ContactLink[];
 };
 
 type PricingPlan = {
   name: string;
   price: string;
   cadence: string;
+  fit: string;
   summary: string;
   items: string[];
+  revisions: string;
+  timeline: string;
+  support: string;
 };
 
 type ContactLink = {
   label: string;
   href: string;
 };
+
+type ContactFormState = {
+  name: string;
+  email: string;
+  projectType: string;
+  message: string;
+};
+
+type ContactFormErrors = Partial<Record<keyof ContactFormState, string>>;
 
 type PhoneNumber = {
   label: string;
@@ -64,11 +81,20 @@ const sectionPathMap: Record<SectionId, string> = {
 
 const tabBar: Array<{ section: SectionId; label: string; icon: string }> = [
   { section: "home", label: "Home", icon: "home" },
-  { section: "gallery", label: "Gallery", icon: "photo_library" },
+  { section: "gallery", label: "Portfolio", icon: "photo_library" },
   { section: "contact", label: "Contact Us", icon: "mail" },
   { section: "pricing", label: "Pricing", icon: "payments" },
   { section: "team", label: "Team", icon: "groups" },
 ];
+
+const primaryButtonClass =
+  "inline-flex items-center justify-center rounded-full bg-stone-950 px-6 py-3 font-label text-[10px] uppercase tracking-[0.28em] text-stone-50 transition-all duration-300 hover:bg-stone-700 active:scale-[0.99]";
+
+const secondaryButtonClass =
+  "inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-6 py-3 font-label text-[10px] uppercase tracking-[0.28em] text-stone-950 transition-all duration-300 hover:border-stone-400 hover:bg-stone-100 active:scale-[0.99]";
+
+const tertiaryButtonClass =
+  "inline-flex items-center justify-center font-label text-[10px] uppercase tracking-[0.22em] text-stone-500 transition-colors duration-300 hover:text-stone-950";
 
 const projects: Project[] = [
   {
@@ -79,10 +105,12 @@ const projects: Project[] = [
       "A marketplace designed to feel immediate, warm, and operationally disciplined across the entire ordering journey.",
     note:
       "The system relied on intentional hierarchy, dense service states, and a visual rhythm that kept movement legible under pressure.",
+    outcome: "Made the ordering flow faster to understand and easier to complete under pressure.",
     year: "2024",
     sector: "Commerce",
     client: "FoodHunt",
     tags: ["Next.js", "Node.js", "Realtime"],
+    metrics: ["34% faster checkout", "22% fewer drop-offs", "2-week launch cycle"],
     accent: "#f97316",
     height: "min-h-[27rem]",
     slides: [
@@ -99,10 +127,12 @@ const projects: Project[] = [
       "An operational logistics interface built to make routing, fulfillment, and dispatch feel almost invisible.",
     note:
       "We compressed complexity into a quiet operational surface so teams could move faster without visual panic.",
+    outcome: "Improved dispatcher routing clarity and cut assignment friction for ops teams.",
     year: "2025",
     sector: "Logistics",
     client: "DzPatch",
     tags: ["Systems", "Frontend", "Ops"],
+    metrics: ["27% faster route assignment", "41% fewer support escalations", "Realtime dispatch visibility"],
     accent: "#22c55e",
     height: "min-h-[22rem]",
     slides: [
@@ -119,10 +149,12 @@ const projects: Project[] = [
       "A payment product language centered on trust, speed, and calm financial visibility for modern African businesses.",
     note:
       "Noise was removed aggressively, letting spacing, contrast, and motion carry the feeling of confidence.",
+    outcome: "Raised payment confidence with a calmer, more legible financial workflow.",
     year: "2025",
     sector: "Fintech",
     client: "NovyPay",
     tags: ["Fintech", "UI/UX", "Platform"],
+    metrics: ["18% higher completion rate", "31% faster first transaction", "Reduced support confusion"],
     accent: "#8b5cf6",
     height: "min-h-[30rem]",
     slides: [
@@ -139,10 +171,12 @@ const projects: Project[] = [
       "A decentralized marketplace framed as a product of ritual, precision, and quiet confidence.",
     note:
       "The work leaned into contrast and atmosphere so advanced systems felt inviting rather than intimidating.",
+    outcome: "Made a technically dense marketplace easier to trust and navigate.",
     year: "2024",
     sector: "Web3",
     client: "X-Works",
     tags: ["Web3", "Smart Contracts", "Product"],
+    metrics: ["29% deeper product exploration", "Clearer onboarding path", "Stronger trust cues"],
     accent: "#f59e0b",
     height: "min-h-[24rem]",
     slides: [
@@ -159,10 +193,12 @@ const projects: Project[] = [
       "An on-chain learning surface built with a slower, more ceremonial sense of progression.",
     note:
       "Each interaction was designed to feel considered, almost architectural, rather than dashboard-like.",
+    outcome: "Turned a complex learning journey into a calmer path to completion.",
     year: "2025",
     sector: "Education",
     client: "Illusion Academy",
     tags: ["Education", "Motion", "Web3"],
+    metrics: ["24% more lesson completion", "Shorter path to first reward", "Clearer progression states"],
     accent: "#38bdf8",
     height: "min-h-[26rem]",
     slides: [
@@ -187,25 +223,37 @@ const phoneNumbers: PhoneNumber[] = [
 
 const plans: PricingPlan[] = [
   {
-    name: "Starter",
-    price: "$2.5k",
+    name: "Audit",
+    price: "$5k",
     cadence: "per engagement",
-    summary: "For landing pages, focused product surfaces, and fast validation work.",
-    items: ["1 focused product surface", "Design + frontend build", "2 weeks delivery"],
+    fit: "For founders shipping an MVP or fixing a critical product surface fast.",
+    summary: "A focused product audit and one rebuilt surface designed to remove confusion before you scale.",
+    items: ["1 focused product surface", "Product audit + redesign", "Implementation-ready handoff"],
+    revisions: "2 revision rounds",
+    timeline: "2 weeks",
+    support: "7 days launch follow-through",
   },
   {
     name: "Signature",
-    price: "$6k",
+    price: "$12k",
     cadence: "per engagement",
-    summary: "For serious brands that need a polished product experience from concept to launch.",
-    items: ["Multi-page product experience", "UX systems + implementation", "4 to 6 weeks delivery"],
+    fit: "For brands scaling with precision across multiple flows, pages, or product moments.",
+    summary: "A full product experience engagement spanning UX direction, visual systems, and frontend delivery.",
+    items: ["Multi-page product experience", "UX systems + implementation", "Launch-ready refinement"],
+    revisions: "4 revision rounds",
+    timeline: "4 to 6 weeks",
+    support: "14 days launch support",
   },
   {
     name: "Retainer",
-    price: "$3k",
+    price: "$8k",
     cadence: "monthly",
-    summary: "For teams that want an ongoing design and engineering partner with steady momentum.",
+    fit: "For product teams building moats and needing a steady design-engineering partner.",
+    summary: "An ongoing partnership for continuous refinement, new surfaces, and faster decision-making.",
     items: ["Ongoing product refinement", "Priority iteration cycles", "Weekly planning touchpoints"],
+    revisions: "Weekly iteration cycles",
+    timeline: "Month-to-month",
+    support: "Continuous collaboration",
   },
 ];
 
@@ -214,16 +262,61 @@ const team: TeamMember[] = [
     name: "Umoha",
     role: "Creative Direction",
     note: "Shapes the tone, visual restraint, and editorial feel of every surface.",
+    credentials: ["Led product work across fintech and commerce", "Design systems + product storytelling"],
+    links: [
+      { label: "LinkedIn", href: "https://linkedin.com/company/illusionservices" },
+      { label: "X", href: "https://x.com/illusionservices" },
+      { label: "GitHub", href: "https://github.com/illusionservices" },
+      { label: "Behance", href: "https://behance.net/illusionservices" },
+    ],
   },
   {
     name: "Amina",
     role: "Product Design",
     note: "Translates complexity into interfaces that feel immediate and legible.",
+    credentials: ["Previously on B2B and mobility products", "UX flows, research synthesis, interface systems"],
+    links: [
+      { label: "LinkedIn", href: "https://linkedin.com/company/illusionservices" },
+      { label: "X", href: "https://x.com/illusionservices" },
+      { label: "GitHub", href: "https://github.com/illusionservices" },
+      { label: "Behance", href: "https://behance.net/illusionservices" },
+    ],
   },
   {
     name: "David",
     role: "Engineering",
     note: "Builds the systems layer so the experience stays calm under real use.",
+    credentials: ["Frontend architecture + implementation", "Shipped products in logistics and payments"],
+    links: [
+      { label: "LinkedIn", href: "https://linkedin.com/company/illusionservices" },
+      { label: "X", href: "https://x.com/illusionservices" },
+      { label: "GitHub", href: "https://github.com/illusionservices" },
+      { label: "Behance", href: "https://behance.net/illusionservices" },
+    ],
+  },
+  {
+    name: "Zainab",
+    role: "Brand Strategy",
+    note: "Keeps product voice, positioning, and narrative aligned from first impression to launch.",
+    credentials: ["Positioning, naming, and launch narratives", "Works across early-stage and growth brands"],
+    links: [
+      { label: "LinkedIn", href: "https://linkedin.com/company/illusionservices" },
+      { label: "X", href: "https://x.com/illusionservices" },
+      { label: "GitHub", href: "https://github.com/illusionservices" },
+      { label: "Behance", href: "https://behance.net/illusionservices" },
+    ],
+  },
+  {
+    name: "Tobi",
+    role: "Frontend Systems",
+    note: "Turns interface direction into polished, responsive experiences with careful implementation detail.",
+    credentials: ["Design-to-code execution", "Interaction polish and responsive systems"],
+    links: [
+      { label: "LinkedIn", href: "https://linkedin.com/company/illusionservices" },
+      { label: "X", href: "https://x.com/illusionservices" },
+      { label: "GitHub", href: "https://github.com/illusionservices" },
+      { label: "Behance", href: "https://behance.net/illusionservices" },
+    ],
   },
 ];
 
@@ -237,7 +330,10 @@ function pathToSection(pathname: string): SectionId {
 
 function SlideScene({ slide, accent }: { slide: Slide; accent: string }) {
   return (
-    <div className={`relative h-full w-full overflow-hidden bg-gradient-to-b ${slide.tone}`}>
+    <div
+      aria-hidden="true"
+      className={`relative h-full w-full overflow-hidden bg-gradient-to-b ${slide.tone}`}
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.09),transparent_32%)]" />
       {slide.variant === "monolith" ? (
         <>
@@ -295,31 +391,47 @@ function SlideScene({ slide, accent }: { slide: Slide; accent: string }) {
 
 function HomeSection() {
   return (
-    <section className="mx-auto grid h-full w-full max-w-7xl grid-cols-1 gap-10 py-10 md:grid-cols-[1.05fr_0.95fr] md:items-center md:gap-20 md:py-12">
-      <div>
-        <h1 className="font-headline text-6xl leading-[0.95] tracking-[-0.05em] text-white md:text-[6.1rem]">
-          Software isn&apos;t <span className="italic">built.</span>
+    <section className="mx-auto grid h-full w-full max-w-6xl gap-8 py-12 md:py-16">
+      <div className="max-w-4xl">
+        <p className="font-label text-[11px] uppercase tracking-[0.3em] text-stone-500">
+          Product Design + Engineering Studio
+        </p>
+        <h1 className="mt-4 font-headline text-[4.7rem] leading-[0.92] tracking-[-0.06em] text-stone-950 md:text-[7rem]">
+          Software isn&apos;t
+          <br />
+          <span className="italic">built.</span>
           <br />
           It&apos;s written.
         </h1>
 
-        <div className="mt-10 max-w-xl border-l border-stone-800 pl-6 md:ml-24 md:pl-7">
-          <p className="font-headline text-2xl italic leading-relaxed text-stone-300 md:text-[2rem]">
-            We treat every line of code as a personal letter to the user:
-            intentional, precise, and human. We&apos;re here to help you build
-            something that actually matters.
-          </p>
+        <p className="mt-6 max-w-2xl text-lg leading-8 text-stone-700 md:text-[1.18rem]">
+          We design and ship digital products with clarity, speed, and restraint.
+        </p>
+
+        <div className="mt-8 flex flex-wrap gap-3">
+          <a
+            href="/contact"
+            className={primaryButtonClass}
+          >
+            Let&apos;s Talk
+          </a>
+          <a
+            href="/gallery"
+            className={secondaryButtonClass}
+          >
+            View Portfolio
+          </a>
         </div>
       </div>
 
-      <div className="justify-self-center md:justify-self-end">
-        <div className="aspect-[4/5] w-full max-w-[21rem] overflow-hidden bg-stone-950 md:max-w-[25rem]">
-          <img
-            alt="Macro shot of a fountain pen nib touching textured paper"
-            className="h-full w-full object-cover grayscale"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA31VjwJxG5BfxwnB0EPfMUJjNHckKreP9rHQ_VxR385pEHLnGJ_pXKttVLpA6svy28_-XVOIWHR76HSos5r8xznQnp6vusYmne06-9-5posUK76ZpNYRNd0n_aWIkUZln4Rxbd50XVpnES-cX0AN0zMK9DdpSapRKYBLW_qVVPyfoq9abIEX8J41wz9FPGv9DqCDM34DP3g1Dh-moVpL1v8tu0n88ZXG87eKfUA"
-          />
-        </div>
+      <div className="max-w-4xl border-t border-stone-200 pt-6">
+        <p className="font-label text-[11px] tracking-[0.18em] text-stone-500">
+          Who We&apos;re For
+        </p>
+        <p className="mt-4 max-w-4xl font-headline text-[1.35rem] leading-relaxed text-stone-700 md:text-[1.6rem]">
+          For founders shipping MVPs, brands scaling with precision, and product teams
+          building moats with long-term clarity.
+        </p>
       </div>
     </section>
   );
@@ -332,48 +444,53 @@ function GallerySection({
 }) {
   return (
     <section className="h-full overflow-y-auto no-scrollbar">
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 py-8 md:grid-cols-[0.72fr_1.28fr] md:items-start md:gap-10 md:py-10">
-        <div className="max-w-lg md:sticky md:top-10">
-          <h1 className="font-headline text-[4rem] leading-[0.94] tracking-[-0.055em] text-white md:text-[4.8rem] xl:text-[5.2rem]">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-8 py-8 md:grid-cols-[0.72fr_1.28fr] md:items-start md:gap-8 md:py-10">
+        <div className="max-w-lg md:sticky md:top-8">
+          <h2 className="font-headline text-[3.2rem] leading-[0.96] tracking-[-0.045em] text-stone-950 md:text-[3.9rem] xl:text-[4.3rem]">
             Selected
             <br />
-            <span className="italic text-stone-300">Works.</span>
-          </h1>
-          <p className="mt-8 max-w-sm border-l border-stone-700 pl-5 font-headline text-[1.08rem] italic leading-relaxed text-stone-300 md:ml-8">
+            <span className="text-stone-500">Portfolio.</span>
+          </h2>
+          <p className="mt-6 max-w-sm border-l border-stone-300 pl-5 text-[1.02rem] leading-relaxed text-stone-600 md:ml-8">
             Open one and the story unfolds.
           </p>
         </div>
 
-        <div className="columns-1 gap-4 space-y-4 md:columns-2 xl:columns-3">
+        <div className="columns-1 gap-5 space-y-5 md:columns-2 xl:columns-3">
           {projects.map((project) => (
             <button
               key={project.id}
-              className={`group mb-4 block w-full break-inside-avoid overflow-hidden border border-white/10 bg-[#111111] text-left transition-transform duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-[#141414] ${project.height}`}
+              aria-label={`Open ${project.name} project details`}
+              className={`group mb-4 block w-full break-inside-avoid overflow-hidden rounded-[2rem] border border-stone-200 bg-white text-left shadow-[0_24px_60px_rgba(15,23,42,0.06)] transition-transform duration-300 hover:-translate-y-1 hover:border-stone-300 hover:bg-stone-50 ${project.height}`}
               onClick={() => onOpenProject(project.id)}
+              style={{ contentVisibility: "auto", containIntrinsicSize: "440px" }}
               type="button"
             >
               <div className="flex h-full flex-col">
                 <div className="relative min-h-[16rem] flex-1 overflow-hidden">
                   <SlideScene slide={project.slides[0]} accent={project.accent} />
                 </div>
-                <div className="border-t border-white/6 p-4 md:p-5">
+                <div className="border-t border-stone-200 p-5 md:p-6">
                   <div className="flex items-center justify-between gap-4">
-                    <h2 className="font-headline text-3xl text-white">{project.name}</h2>
+                    <h2 className="font-headline text-3xl text-stone-950">{project.name}</h2>
                     <span className="h-3 w-3 rounded-full" style={{ backgroundColor: project.accent }} />
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-stone-400">{project.summary}</p>
-                  <div className="mt-5 flex items-center justify-between gap-4">
+                  <p className="mt-4 text-sm leading-6 text-stone-600">{project.summary}</p>
+                  <p className="mt-4 border-l border-stone-200 pl-3 text-sm leading-6 text-stone-800">
+                    {project.metrics[0]}
+                  </p>
+                  <div className="mt-6 flex items-center justify-between gap-4">
                     <div className="flex flex-wrap gap-2">
                       {project.tags.slice(0, 2).map((tag) => (
                         <span
                           key={tag}
-                          className="border border-white/10 px-2.5 py-1 font-label text-[10px] uppercase tracking-[0.18em] text-stone-400"
+                          className="rounded-full border border-stone-200 px-2.5 py-1 font-label text-[10px] uppercase tracking-[0.18em] text-stone-500"
                         >
                           {tag}
                         </span>
                       ))}
                     </div>
-                    <span className="font-label text-[11px] uppercase tracking-[0.25em] text-stone-500 transition-colors group-hover:text-white">
+                    <span className="font-label text-[11px] uppercase tracking-[0.25em] text-stone-500 transition-colors group-hover:text-stone-950">
                       Open
                     </span>
                   </div>
@@ -388,100 +505,254 @@ function GallerySection({
 }
 
 function ContactSection() {
+  const [form, setForm] = useState<ContactFormState>({
+    name: "",
+    email: "",
+    projectType: "",
+    message: "",
+  });
+  const [errors, setErrors] = useState<ContactFormErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof ContactFormState, boolean>>>({});
+  const [submitState, setSubmitState] = useState<"idle" | "submitting" | "success">("idle");
+
+  const validateForm = (values: ContactFormState): ContactFormErrors => {
+    const nextErrors: ContactFormErrors = {};
+
+    if (!values.name.trim()) nextErrors.name = "Please share your name.";
+    if (!values.email.trim()) {
+      nextErrors.email = "Please enter your email.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
+      nextErrors.email = "Enter a valid email address.";
+    }
+    if (!values.message.trim()) nextErrors.message = "A short brief helps us respond well.";
+
+    return nextErrors;
+  };
+
+  const updateField = (field: keyof ContactFormState, value: string) => {
+    setForm((current) => {
+      const next = { ...current, [field]: value };
+      if (touched[field]) {
+        setErrors(validateForm(next));
+      }
+      return next;
+    });
+    if (submitState !== "idle") {
+      setSubmitState("idle");
+    }
+  };
+
+  const markTouched = (field: keyof ContactFormState) => {
+    setTouched((current) => ({ ...current, [field]: true }));
+    setErrors((current) => ({
+      ...current,
+      ...validateForm(form),
+    }));
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const nextErrors = validateForm(form);
+    setTouched({
+      name: true,
+      email: true,
+      projectType: true,
+      message: true,
+    });
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setSubmitState("idle");
+      return;
+    }
+
+    setSubmitState("submitting");
+    const subject = encodeURIComponent(
+      `New inquiry${form.projectType ? `: ${form.projectType}` : ""}`,
+    );
+    const body = encodeURIComponent(
+      [
+        `Name: ${form.name || "-"}`,
+        `Email: ${form.email || "-"}`,
+        `Project Type: ${form.projectType || "-"}`,
+        "",
+        form.message || "-",
+      ].join("\n"),
+    );
+
+    setSubmitState("success");
+    window.location.href = `mailto:hello@illusionservices.com?subject=${subject}&body=${body}`;
+  };
+
   return (
     <section className="h-full overflow-y-auto no-scrollbar md:overflow-hidden">
-      <div className="mx-auto grid h-full w-full max-w-7xl gap-5 py-6 md:grid-cols-[1.1fr_0.9fr] md:items-stretch md:py-8">
-        <div className="flex h-full flex-col border border-white/10 bg-[#0b0b0b] p-5 sm:p-6 md:p-7">
-          <p className="font-label text-[10px] uppercase tracking-[0.3em] text-stone-500">
+      <div className="mx-auto grid h-full w-full max-w-7xl gap-8 py-8 md:grid-cols-[1.1fr_0.9fr] md:items-stretch md:py-10">
+        <div className="flex h-full flex-col rounded-[2rem] border border-stone-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)] md:p-7">
+          <p className="font-label text-[11px] tracking-[0.18em] text-stone-500">
             Contact Us
           </p>
-          <h1 className="mt-4 max-w-lg font-headline text-[2.8rem] leading-[0.92] tracking-[-0.05em] text-white md:text-[3.6rem] xl:text-[4rem]">
+          <h2 className="mt-4 max-w-lg font-headline text-[2.6rem] leading-[0.95] tracking-[-0.04em] text-stone-950 md:text-[3.2rem] xl:text-[3.6rem]">
             Let&apos;s make
             <br />
             it clear.
-          </h1>
-          <p className="mt-4 max-w-xl border-l border-stone-800 pl-4 font-headline text-[0.95rem] italic leading-relaxed text-stone-300 md:pl-5">
-            Send the brief. We&apos;ll shape the right scope fast.
+          </h2>
+          <p className="mt-4 max-w-xl border-l border-stone-300 pl-4 text-[0.98rem] leading-relaxed text-stone-600 md:pl-5">
+            Send the brief. We&apos;ll shape scope, timeline, and next steps within 48 hours.
           </p>
 
-          <form className="mt-6 grid flex-1 grid-cols-1 gap-4 md:grid-cols-2">
+          <form className="mt-8 grid flex-1 grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
             <label className="grid gap-2">
-              <span className="font-label text-[10px] uppercase tracking-[0.28em] text-stone-500">
-                Name
+              <span
+                id="contact-name-label"
+                className="flex items-center justify-between gap-3 font-label text-[11px] tracking-[0.14em] text-stone-500"
+              >
+                <span>Name</span>
+                <span className="text-[10px] tracking-[0.12em] text-stone-400">Required</span>
               </span>
               <input
+                id="contact-name"
+                aria-describedby={touched.name && errors.name ? "contact-name-error" : undefined}
+                aria-labelledby="contact-name-label"
+                required
                 type="text"
                 placeholder="Your name"
-                className="border border-white/10 bg-[#111111] px-4 py-2.5 font-headline text-[0.98rem] text-white outline-none transition-colors placeholder:text-stone-600 focus:border-white/25"
+                value={form.name}
+                onBlur={() => markTouched("name")}
+                onChange={(event) => updateField("name", event.target.value)}
+                aria-invalid={errors.name ? "true" : "false"}
+                className={`rounded-[1.5rem] border bg-stone-50 px-4 py-3 font-body text-[0.98rem] text-stone-900 outline-none transition-all duration-300 placeholder:text-stone-400 focus:border-stone-400 ${
+                  errors.name ? "border-[#d97706]/50 bg-[#fffaf2]" : "border-stone-200"
+                }`}
               />
+              {touched.name && errors.name ? (
+                <span id="contact-name-error" className="text-[0.85rem] leading-6 text-[#b45309]">
+                  {errors.name}
+                </span>
+              ) : null}
             </label>
 
             <label className="grid gap-2">
-              <span className="font-label text-[10px] uppercase tracking-[0.28em] text-stone-500">
-                Email
+              <span
+                id="contact-email-label"
+                className="flex items-center justify-between gap-3 font-label text-[11px] tracking-[0.14em] text-stone-500"
+              >
+                <span>Email</span>
+                <span className="text-[10px] tracking-[0.12em] text-stone-400">Required</span>
               </span>
               <input
+                id="contact-email"
+                aria-describedby={touched.email && errors.email ? "contact-email-error" : undefined}
+                aria-labelledby="contact-email-label"
+                required
                 type="email"
                 placeholder="you@company.com"
-                className="border border-white/10 bg-[#111111] px-4 py-2.5 font-headline text-[0.98rem] text-white outline-none transition-colors placeholder:text-stone-600 focus:border-white/25"
+                value={form.email}
+                onBlur={() => markTouched("email")}
+                onChange={(event) => updateField("email", event.target.value)}
+                aria-invalid={errors.email ? "true" : "false"}
+                className={`rounded-[1.5rem] border bg-stone-50 px-4 py-3 font-body text-[0.98rem] text-stone-900 outline-none transition-all duration-300 placeholder:text-stone-400 focus:border-stone-400 ${
+                  errors.email ? "border-[#d97706]/50 bg-[#fffaf2]" : "border-stone-200"
+                }`}
               />
+              {touched.email && errors.email ? (
+                <span id="contact-email-error" className="text-[0.85rem] leading-6 text-[#b45309]">
+                  {errors.email}
+                </span>
+              ) : null}
             </label>
 
             <label className="grid gap-2 md:col-span-2">
-              <span className="font-label text-[10px] uppercase tracking-[0.28em] text-stone-500">
-                Project Type
+              <span
+                id="contact-project-type-label"
+                className="flex items-center justify-between gap-3 font-label text-[11px] tracking-[0.14em] text-stone-500"
+              >
+                <span>Project Type</span>
+                <span className="text-[10px] tracking-[0.12em] text-stone-400">Optional</span>
               </span>
               <input
+                id="contact-project-type"
+                aria-labelledby="contact-project-type-label"
                 type="text"
                 placeholder="Product design, web app, platform..."
-                className="border border-white/10 bg-[#111111] px-4 py-2.5 font-headline text-[0.98rem] text-white outline-none transition-colors placeholder:text-stone-600 focus:border-white/25"
+                value={form.projectType}
+                onBlur={() => markTouched("projectType")}
+                onChange={(event) =>
+                  updateField("projectType", event.target.value)
+                }
+                className="rounded-[1.5rem] border border-stone-200 bg-stone-50 px-4 py-3 font-body text-[0.98rem] text-stone-900 outline-none transition-all duration-300 placeholder:text-stone-400 focus:border-stone-400"
               />
             </label>
 
             <label className="grid gap-2 md:col-span-2">
-              <span className="font-label text-[10px] uppercase tracking-[0.28em] text-stone-500">
-                Message
+              <span
+                id="contact-message-label"
+                className="flex items-center justify-between gap-3 font-label text-[11px] tracking-[0.14em] text-stone-500"
+              >
+                <span>Message</span>
+                <span className="text-[10px] tracking-[0.12em] text-stone-400">Required</span>
               </span>
               <textarea
+                id="contact-message"
+                aria-describedby={touched.message && errors.message ? "contact-message-error" : undefined}
+                aria-labelledby="contact-message-label"
+                required
                 placeholder="What are we building?"
                 rows={4}
-                className="resize-none border border-white/10 bg-[#111111] px-4 py-3 font-headline text-[0.98rem] text-white outline-none transition-colors placeholder:text-stone-600 focus:border-white/25"
+                value={form.message}
+                onBlur={() => markTouched("message")}
+                onChange={(event) => updateField("message", event.target.value)}
+                aria-invalid={errors.message ? "true" : "false"}
+                className={`resize-none rounded-[1.5rem] border bg-stone-50 px-4 py-3 font-body text-[0.98rem] text-stone-900 outline-none transition-all duration-300 placeholder:text-stone-400 focus:border-stone-400 ${
+                  errors.message ? "border-[#d97706]/50 bg-[#fffaf2]" : "border-stone-200"
+                }`}
               />
+              {touched.message && errors.message ? (
+                <span id="contact-message-error" className="text-[0.85rem] leading-6 text-[#b45309]">
+                  {errors.message}
+                </span>
+              ) : null}
             </label>
 
             <button
               type="submit"
-              className="mt-1 inline-flex w-fit items-center gap-3 bg-white px-6 py-3 font-label text-[10px] uppercase tracking-[0.3em] text-black transition-colors hover:bg-stone-200 md:col-span-2"
+              disabled={submitState === "submitting"}
+              className={`${primaryButtonClass} mt-2 w-fit gap-3 disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2`}
             >
-              Send Inquiry
+              {submitState === "submitting" ? "Opening Email" : "Let's Talk"}
               <span className="material-symbols-outlined text-[18px]">north_east</span>
             </button>
+            {submitState === "success" ? (
+              <p aria-live="polite" className="md:col-span-2 text-[0.92rem] leading-6 text-stone-500">
+                Your email app should open with the brief filled in. If it doesn&apos;t,
+                write us at hello@illusionservices.com.
+              </p>
+            ) : null}
           </form>
         </div>
 
-        <aside className="grid h-full gap-4 border border-white/10 bg-[#080808] p-5 sm:p-6 md:p-7">
-          <div className="border border-white/8 bg-[#101010] p-4 md:p-5">
-            <p className="font-label text-[10px] uppercase tracking-[0.3em] text-stone-500">
+        <aside className="grid h-full gap-5 rounded-[2rem] border border-stone-200 bg-[#f5f1e8] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.05)] md:p-7">
+          <div className="rounded-[2rem] border border-stone-200 bg-white p-5">
+            <p className="font-label text-[11px] tracking-[0.18em] text-stone-500">
               Reach Directly
             </p>
             <div className="mt-4 space-y-3">
               <a
                 href="mailto:hello@illusionservices.com"
-                className="block font-headline text-[1.15rem] text-white transition-colors hover:text-stone-300 xl:text-[1.3rem]"
+                className="block font-headline text-[1.15rem] text-stone-950 transition-colors hover:text-stone-600 xl:text-[1.3rem]"
               >
                 hello@illusionservices.com
               </a>
               <a
                 href="mailto:projects@illusionservices.com"
-                className="block font-headline text-[0.95rem] italic text-stone-400 transition-colors hover:text-white"
+                className="block font-headline text-[0.95rem] italic text-stone-500 transition-colors hover:text-stone-900"
               >
                 projects@illusionservices.com
               </a>
             </div>
           </div>
 
-          <div className="border border-white/8 bg-[#101010] p-4 md:p-5">
-            <p className="font-label text-[10px] uppercase tracking-[0.3em] text-stone-500">
+          <div className="rounded-[2rem] border border-stone-200 bg-white p-5">
+            <p className="font-label text-[11px] tracking-[0.18em] text-stone-500">
               Phone Numbers
             </p>
             <div className="mt-4 grid gap-3">
@@ -489,12 +760,12 @@ function ContactSection() {
                 <a
                   key={phone.value}
                   href={phone.href}
-                  className="flex items-center justify-between gap-4 border border-white/8 bg-[#0c0c0c] px-3 py-3 transition-colors hover:border-white/20 hover:bg-[#141414]"
+                  className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-stone-200 bg-stone-50 px-3 py-3 transition-colors hover:border-stone-300 hover:bg-white"
                 >
-                  <span className="font-label text-[10px] uppercase tracking-[0.24em] text-stone-500">
+                  <span className="font-label text-[11px] tracking-[0.14em] text-stone-500">
                     {phone.label}
                   </span>
-                  <span className="font-headline text-[0.98rem] text-white">
+                  <span className="font-headline text-[0.98rem] text-stone-950">
                     {phone.value}
                   </span>
                 </a>
@@ -502,8 +773,8 @@ function ContactSection() {
             </div>
           </div>
 
-          <div className="border border-white/8 bg-[#101010] p-4 md:p-5">
-            <p className="font-label text-[10px] uppercase tracking-[0.3em] text-stone-500">
+          <div className="rounded-[2rem] border border-stone-200 bg-white p-5">
+            <p className="font-label text-[11px] tracking-[0.18em] text-stone-500">
               Social Media
             </p>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -513,10 +784,10 @@ function ContactSection() {
                   href={social.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-between gap-4 border border-white/8 bg-[#0c0c0c] px-3 py-3 font-headline text-[0.95rem] text-white transition-colors hover:border-white/20 hover:bg-[#141414]"
+                  className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-stone-200 bg-stone-50 px-3 py-3 font-headline text-[0.95rem] text-stone-950 transition-colors hover:border-stone-300 hover:bg-white"
                 >
                   <span>{social.label}</span>
-                  <span className="material-symbols-outlined text-[18px] text-stone-400">
+                  <span className="material-symbols-outlined text-[18px] text-stone-500">
                     north_east
                   </span>
                 </a>
@@ -536,81 +807,122 @@ function PricingSection({
 }) {
   return (
     <section className="h-full overflow-y-auto no-scrollbar md:overflow-hidden">
-      <div className="mx-auto grid h-full w-full max-w-7xl gap-6 py-6 md:grid-cols-[0.78fr_1.22fr] md:items-center md:py-8">
-        <div className="max-w-2xl">
-          <p className="font-label text-[10px] uppercase tracking-[0.3em] text-stone-500">
+      <div className="mx-auto w-full max-w-7xl py-8 md:py-10">
+        <div className="max-w-3xl">
+          <p className="font-label text-[11px] tracking-[0.18em] text-stone-500">
             Pricing
           </p>
-          <h1 className="mt-4 font-headline text-[3rem] leading-[0.92] tracking-[-0.055em] text-white md:text-[4rem] xl:text-[4.5rem]">
+          <h2 className="mt-4 font-headline text-[2.8rem] leading-[0.95] tracking-[-0.045em] text-stone-950 md:text-[3.5rem] xl:text-[4rem]">
             Clear scopes.
             <br />
-            Quiet confidence.
-          </h1>
-          <p className="mt-5 max-w-xl border-l border-stone-800 pl-4 font-headline text-[0.96rem] italic leading-relaxed text-stone-300 md:pl-5">
-            Focused engagements, fewer moving parts, cleaner delivery.
+            Serious delivery.
+          </h2>
+          <p className="mt-6 max-w-2xl text-[1.02rem] leading-8 text-stone-700">
+            Choose the engagement that matches your stage, urgency, and how much
+            product depth you need.
           </p>
-          <button
-            type="button"
-            onClick={() => onNavigate("contact")}
-            className="mt-8 inline-flex items-center gap-3 border border-white/12 px-5 py-3 font-label text-[10px] uppercase tracking-[0.3em] text-white transition-colors hover:border-white/25 hover:bg-[#111111]"
-          >
-            Start a Conversation
-            <span className="material-symbols-outlined text-[18px]">
-              north_east
-            </span>
-          </button>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => onNavigate("contact")}
+              className={primaryButtonClass}
+            >
+              Let&apos;s Talk
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate("gallery")}
+              className={secondaryButtonClass}
+            >
+              View Portfolio
+            </button>
+          </div>
+          <p className="mt-4 text-[0.92rem] leading-6 text-stone-500 md:hidden">
+            Swipe horizontally to compare plans.
+          </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="-mx-1 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 no-scrollbar md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0">
           {plans.map((plan) => (
             <article
               key={plan.name}
-              className="flex h-full min-h-[19rem] flex-col border border-white/10 bg-[#0b0b0b] p-5"
+              className={`min-w-[18.75rem] snap-start flex h-full min-h-[19rem] flex-col rounded-[2rem] border p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)] md:min-w-0 ${
+                plan.name === "Signature"
+                  ? "border-stone-300 bg-[#f5f1e8]"
+                  : "border-stone-200 bg-white"
+              }`}
+              style={{ contentVisibility: "auto", containIntrinsicSize: "560px" }}
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-label text-[10px] uppercase tracking-[0.28em] text-stone-500">
+                  <p className="font-label text-[11px] tracking-[0.18em] text-stone-500">
                     {plan.name}
                   </p>
-                  <p className="mt-3 font-headline text-[2.6rem] leading-none tracking-[-0.05em] text-white xl:text-[2.9rem]">
+                  <p className="mt-3 font-headline text-[2.7rem] leading-none tracking-[-0.05em] text-stone-950 xl:text-[3rem]">
                     {plan.price}
                   </p>
+                  <p className="mt-4 max-w-sm text-[1rem] leading-7 text-stone-700">
+                    {plan.fit}
+                  </p>
                 </div>
-                <span className="rounded-full border border-white/10 px-3 py-1 font-label text-[10px] uppercase tracking-[0.22em] text-stone-400">
+                <span className="rounded-full border border-stone-200 px-3 py-1 font-label text-[10px] uppercase tracking-[0.22em] text-stone-500">
                   {plan.cadence}
                 </span>
               </div>
 
-              <p className="mt-4 max-w-sm font-headline text-[0.92rem] leading-relaxed text-stone-300">
+              <p className="mt-6 max-w-sm border-l border-stone-300 pl-4 text-[0.96rem] leading-7 text-stone-600">
                 {plan.summary}
               </p>
 
-              <div className="mt-5 border-t border-white/8 pt-4">
+              <div className="mt-8 border-t border-stone-200 pt-6">
                 <div className="grid gap-3">
                   {plan.items.map((item) => (
                     <div
                       key={item}
-                      className="flex items-center justify-between gap-3 border border-white/8 bg-[#101010] px-3 py-2.5"
+                      className="flex items-center justify-between gap-3 rounded-[1.5rem] border border-stone-200 bg-white/70 px-4 py-3"
                     >
-                      <span className="font-headline text-[0.9rem] text-white">
+                      <span className="text-[0.98rem] leading-6 text-stone-900">
                         {item}
                       </span>
-                      <span className="h-2.5 w-2.5 rounded-full bg-stone-500" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-stone-400" />
                     </div>
                   ))}
                 </div>
+                <div className="mt-6 grid gap-3">
+                  <div className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-stone-200 bg-white px-4 py-3">
+                    <span className="font-label text-[11px] tracking-[0.14em] text-stone-500">
+                      Timeline
+                    </span>
+                    <span className="text-[0.96rem] text-stone-900">{plan.timeline}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-stone-200 bg-white px-4 py-3">
+                    <span className="font-label text-[11px] tracking-[0.14em] text-stone-500">
+                      Revisions
+                    </span>
+                    <span className="text-[0.96rem] text-stone-900">{plan.revisions}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-stone-200 bg-white px-4 py-3">
+                    <span className="font-label text-[11px] tracking-[0.14em] text-stone-500">
+                      Support
+                    </span>
+                    <span className="max-w-[11rem] text-right text-[0.96rem] leading-6 text-stone-900">
+                      {plan.support}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-auto pt-5">
+              <div className="mt-auto pt-6">
                 <button
                   type="button"
                   onClick={() => onNavigate("contact")}
-                  className="inline-flex items-center gap-3 border border-white/12 px-4 py-2.5 font-label text-[10px] uppercase tracking-[0.26em] text-white transition-colors hover:border-white/25 hover:bg-[#111111]"
+                  className={`w-full ${
+                    plan.name === "Signature"
+                      ? primaryButtonClass
+                      : secondaryButtonClass
+                  }`}
                 >
-                  Choose Plan
-                  <span className="material-symbols-outlined text-[18px]">
-                    north_east
-                  </span>
+                  Let&apos;s Talk
                 </button>
               </div>
             </article>
@@ -628,56 +940,91 @@ function TeamSection({
 }) {
   return (
     <section className="h-full overflow-y-auto no-scrollbar md:overflow-hidden">
-      <div className="mx-auto grid h-full w-full max-w-7xl gap-6 py-6 md:grid-cols-[0.8fr_1.2fr] md:items-center md:py-8">
+      <div className="mx-auto grid h-full w-full max-w-7xl gap-8 py-8 md:grid-cols-[0.8fr_1.2fr] md:items-center md:py-10">
         <div className="max-w-2xl">
-          <p className="font-label text-[10px] uppercase tracking-[0.3em] text-stone-500">
+          <p className="font-label text-[11px] tracking-[0.18em] text-stone-500">
             Team
           </p>
-          <h1 className="mt-4 font-headline text-[3rem] leading-[0.92] tracking-[-0.055em] text-white md:text-[4rem] xl:text-[4.5rem]">
+          <h2 className="mt-4 font-headline text-[2.8rem] leading-[0.95] tracking-[-0.045em] text-stone-950 md:text-[3.4rem] xl:text-[3.8rem]">
             Small studio.
             <br />
             Deliberate work.
-          </h1>
-          <p className="mt-5 max-w-xl border-l border-stone-800 pl-4 font-headline text-[0.96rem] italic leading-relaxed text-stone-300 md:pl-5">
+          </h2>
+          <p className="mt-5 max-w-xl border-l border-stone-300 pl-4 text-[0.98rem] leading-relaxed text-stone-600 md:pl-5">
             A tight team of designers and engineers working with clarity, speed,
             and care.
+          </p>
+          <p className="mt-4 max-w-xl text-[0.95rem] leading-7 text-stone-500">
+            Work spans commerce, logistics, fintech, web3, and education.
+          </p>
+          <p className="mt-4 max-w-xl text-[0.95rem] leading-7 text-stone-500">
+            Placeholder credentials and profile links are shown here for design review and can be replaced with final bios later.
           </p>
           <button
             type="button"
             onClick={() => onNavigate("contact")}
-            className="mt-8 inline-flex items-center gap-3 border border-white/12 px-5 py-3 font-label text-[10px] uppercase tracking-[0.3em] text-white transition-colors hover:border-white/25 hover:bg-[#111111]"
+            className={`${secondaryButtonClass} mt-8 gap-3 px-5`}
           >
-            Work With Us
+            Let&apos;s Talk
             <span className="material-symbols-outlined text-[18px]">
               north_east
             </span>
           </button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {team.map((member) => (
             <article
               key={member.name}
-              className="flex h-full min-h-[18rem] flex-col border border-white/10 bg-[#0b0b0b] p-5"
+              className="flex h-full min-h-[18rem] flex-col rounded-[2rem] border border-stone-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)]"
+              style={{ contentVisibility: "auto", containIntrinsicSize: "420px" }}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-label text-[10px] uppercase tracking-[0.28em] text-stone-500">
+                  <p className="font-label text-[11px] tracking-[0.18em] text-stone-500">
                     {member.role}
                   </p>
-                  <h2 className="mt-3 font-headline text-[2.2rem] leading-none tracking-[-0.05em] text-white">
+                  <h2 className="mt-3 font-headline text-[2.2rem] leading-none tracking-[-0.05em] text-stone-950">
                     {member.name}
                   </h2>
                 </div>
-                <span className="h-2.5 w-2.5 rounded-full bg-stone-500" />
+                <span className="h-2.5 w-2.5 rounded-full bg-stone-400" />
               </div>
 
-              <p className="mt-5 font-headline text-[0.95rem] leading-relaxed text-stone-300">
+              <p className="mt-6 font-headline text-[0.95rem] leading-relaxed text-stone-600">
                 {member.note}
               </p>
 
-              <div className="mt-auto border-t border-white/8 pt-4">
-                <p className="font-label text-[10px] uppercase tracking-[0.24em] text-stone-500">
+              <div className="mt-6 grid gap-2">
+                {member.credentials.map((item) => (
+                  <div
+                    key={`${member.name}-${item}`}
+                    className="rounded-[1.5rem] border border-stone-200 bg-stone-50 px-4 py-3 text-[0.92rem] leading-6 text-stone-700"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                {member.links.map((link) => (
+                  <a
+                    key={`${member.name}-${link.label}`}
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-2 font-label text-[10px] uppercase tracking-[0.18em] text-stone-600 transition-colors hover:border-stone-300 hover:bg-white hover:text-stone-950"
+                  >
+                    <span>{link.label}</span>
+                    <span className="material-symbols-outlined text-[14px]">
+                      north_east
+                    </span>
+                  </a>
+                ))}
+              </div>
+
+              <div className="mt-auto border-t border-stone-200 pt-6">
+                <p className="font-label text-[11px] tracking-[0.14em] text-stone-500">
                   Illusion Services
                 </p>
               </div>
@@ -700,30 +1047,72 @@ function ProjectOverlay({
   onClose: () => void;
   onStep: (direction: -1 | 1) => void;
 }) {
+  const fullscreenScope = project.id;
+  const [fullscreenState, setFullscreenState] = useState({
+    scope: fullscreenScope,
+    value: false,
+  });
+  const isFullscreen =
+    fullscreenState.scope === fullscreenScope ? fullscreenState.value : false;
+
+  const toggleFullscreen = () => {
+    setFullscreenState((current) => ({
+      scope: fullscreenScope,
+      value: current.scope === fullscreenScope ? !current.value : true,
+    }));
+  };
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/94 md:bg-black/88 md:backdrop-blur-xl">
-      <div className="absolute inset-0 hidden scale-[0.985] opacity-[0.09] blur-md md:block">
-        <div className="h-full w-full bg-black" />
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(248,245,239,0.96)] md:backdrop-blur-xl">
+      <div className="absolute inset-0 hidden scale-[0.985] opacity-[0.3] blur-md md:block">
+        <div className="h-full w-full bg-[linear-gradient(180deg,#ffffff,#f1ede5)]" />
       </div>
-      <div className="relative min-h-screen bg-[#070707] lg:grid lg:min-h-screen lg:grid-cols-[minmax(0,0.64fr)_minmax(22rem,0.36fr)]">
-        <section className="relative min-h-[42svh] overflow-hidden border-y border-white/8 sm:min-h-[48svh] lg:min-h-screen lg:border-r lg:border-y-0">
-          <div className="absolute inset-0 transition-all duration-300 md:duration-500">
-            <SlideScene slide={project.slides[slideIndex]} accent={project.accent} />
+      <div
+        className={`relative min-h-screen bg-[#f8f5ef] ${
+          isFullscreen
+            ? "grid min-h-screen grid-cols-1"
+            : "lg:grid lg:min-h-screen lg:grid-cols-[minmax(0,0.64fr)_minmax(22rem,0.36fr)]"
+        }`}
+      >
+        <section className="relative min-h-[42svh] overflow-hidden border-y border-stone-200 sm:min-h-[48svh] lg:min-h-screen lg:border-r lg:border-y-0">
+          <div className="absolute inset-0 overflow-auto no-scrollbar">
+            <div
+              key={project.slides[slideIndex].id}
+              className="project-slide-enter absolute inset-0 origin-center transition-all duration-500 ease-out"
+            >
+              <SlideScene slide={project.slides[slideIndex]} accent={project.accent} />
+            </div>
           </div>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_35%,rgba(0,0,0,0.26)_100%)]" />
-          <div className="absolute left-5 top-5 rounded-full border border-white/10 bg-black/35 px-3 py-1.5 font-label text-[10px] uppercase tracking-[0.28em] text-stone-300 md:left-6 md:top-6 md:bg-black/25 md:backdrop-blur-md">
-            {String(slideIndex + 1).padStart(2, "0")} / {String(project.slides.length).padStart(2, "0")}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(255,255,255,0.14)_100%)]" />
+          <div className="absolute left-5 top-5 px-3 py-1.5 font-label text-[10px] uppercase tracking-[0.28em] text-white md:left-6 md:top-6">
+            <span key={slideIndex} className="counter-enter inline-block">
+              {String(slideIndex + 1).padStart(2, "0")} / {String(project.slides.length).padStart(2, "0")}
+            </span>
+          </div>
+          <div className="absolute right-5 top-5 md:right-6 md:top-6">
+            <button
+              aria-label={isFullscreen ? "Exit fullscreen view" : "Open fullscreen view"}
+              className="flex h-10 w-10 items-center justify-center text-white transition-colors hover:text-stone-200"
+              onClick={toggleFullscreen}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {isFullscreen ? "fullscreen_exit" : "fullscreen"}
+              </span>
+            </button>
           </div>
           <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between md:bottom-6 md:left-6 md:right-6">
             <button
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/40 text-white transition-colors hover:bg-white/18 md:h-12 md:w-12 md:bg-white/10 md:backdrop-blur-md"
+              aria-label="Previous project slide"
+              className="flex h-11 w-11 items-center justify-center text-white transition-colors hover:text-stone-200 md:h-12 md:w-12"
               onClick={() => onStep(-1)}
               type="button"
             >
               <span className="material-symbols-outlined">arrow_back</span>
             </button>
             <button
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/40 text-white transition-colors hover:bg-white/18 md:h-12 md:w-12 md:bg-white/10 md:backdrop-blur-md"
+              aria-label="Next project slide"
+              className="flex h-11 w-11 items-center justify-center text-white transition-colors hover:text-stone-200 md:h-12 md:w-12"
               onClick={() => onStep(1)}
               type="button"
             >
@@ -732,11 +1121,19 @@ function ProjectOverlay({
           </div>
         </section>
 
-        <aside className="flex min-h-[58svh] flex-col overflow-y-auto px-6 py-5 no-scrollbar sm:px-8 sm:py-6 lg:min-h-screen lg:px-10 lg:py-7">
+        <aside
+          className={`flex min-h-[58svh] flex-col overflow-y-auto px-6 py-6 no-scrollbar sm:px-8 sm:py-8 lg:min-h-screen lg:px-10 lg:py-8 ${
+            isFullscreen ? "hidden" : ""
+          }`}
+        >
           <div className="flex min-h-full flex-col">
+            <div
+              className="mb-6 h-1.5 w-20 rounded-full"
+              style={{ backgroundColor: project.accent }}
+            />
             <div className="flex items-center justify-end gap-4">
               <button
-                className="flex items-center gap-3 font-label text-[11px] uppercase tracking-[0.3em] text-stone-300 transition-colors hover:text-white"
+                className={`${tertiaryButtonClass} gap-3 text-[11px] tracking-[0.18em]`}
                 onClick={onClose}
                 type="button"
               >
@@ -746,58 +1143,89 @@ function ProjectOverlay({
             </div>
 
             <div className="mt-7 lg:mt-8">
-              <h2 className="max-w-sm font-headline text-[clamp(2.35rem,5vw,3.25rem)] leading-[0.9] tracking-[-0.04em] text-white">
+              <p
+                className="font-label text-[11px] tracking-[0.18em]"
+                style={{ color: project.accent }}
+              >
+                {project.name}
+              </p>
+              <h2 className="max-w-sm font-headline text-[clamp(2.35rem,5vw,3.25rem)] leading-[0.9] tracking-[-0.04em] text-stone-950">
                 {project.title}
               </h2>
-              <p className="mt-4 max-w-sm font-headline text-[0.95rem] leading-relaxed text-stone-100 lg:text-[1rem]">
+              <p className="mt-4 max-w-sm font-headline text-[0.95rem] leading-relaxed text-stone-700 lg:text-[1rem]">
                 {project.summary}
               </p>
-              <p className="mt-3 max-w-sm font-headline text-[0.88rem] italic leading-relaxed text-stone-500">
+              <p className="mt-3 max-w-sm text-[0.92rem] leading-relaxed text-stone-500">
                 {project.note}
               </p>
-            </div>
-
-            <div className="mt-6 border-t border-white/8 pt-5">
-              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-                <div>
-                  <p className="font-label text-[11px] uppercase tracking-[0.28em] text-stone-500">
-                    Year
-                  </p>
-                  <p className="mt-1 font-headline text-[1.05rem] text-white">
-                    {project.year}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-label text-[11px] uppercase tracking-[0.28em] text-stone-500">
-                    Sector
-                  </p>
-                  <p className="mt-1 font-headline text-[1.05rem] text-white">
-                    {project.sector}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-label text-[11px] uppercase tracking-[0.28em] text-stone-500">
-                    Client
-                  </p>
-                  <p className="mt-1 font-headline text-[1.05rem] italic text-white">
-                    {project.client}
-                  </p>
-                </div>
+              <div
+                className="mt-6 rounded-[2rem] border bg-white px-5 py-5"
+                style={{ borderColor: `${project.accent}33` }}
+              >
+                <p
+                  className="font-label text-[11px] tracking-[0.14em]"
+                  style={{ color: project.accent }}
+                >
+                  Outcome
+                </p>
+                <p className="mt-2 text-sm leading-6 text-stone-800">
+                  {project.outcome}
+                </p>
               </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              {project.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="border border-white/12 px-3 py-1.5 font-label text-[10px] uppercase tracking-[0.2em] text-stone-300"
+              <div className="mt-8 border-t border-stone-200 pt-6">
+                <p
+                  className="font-label text-[11px] tracking-[0.18em]"
+                  style={{ color: project.accent }}
                 >
-                  {tag}
-                </span>
-              ))}
+                  Proof Points
+                </p>
+                <div className="mt-4 grid gap-3">
+                  {project.metrics.map((metric, index) => (
+                  <div
+                    key={metric}
+                    className="flex items-start gap-3 rounded-[1.5rem] border bg-white px-3 py-3 text-sm text-stone-800"
+                    style={{ borderColor: `${project.accent}22` }}
+                  >
+                    <span
+                      className="mt-1 h-2.5 w-2.5 rounded-full"
+                      style={{
+                        backgroundColor: project.accent,
+                        opacity: 1 - index * 0.18,
+                      }}
+                    />
+                    <span>{metric}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-[0.85rem] leading-6 text-stone-400">
+                Placeholder case-study metrics for design review. Replace with verified results before launch.
+              </p>
             </div>
 
-            <div className="mt-auto border-t border-white/8 pt-5" />
+            <div className="mt-8 border-t border-stone-200 pt-5">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-3 text-[0.92rem] leading-6 text-stone-600">
+                <span>
+                  <span className="text-stone-500">Year</span> {project.year}
+                </span>
+                <span>
+                  <span className="text-stone-500">Sector</span> {project.sector}
+                </span>
+                <span>
+                  <span className="text-stone-500">Client</span> {project.client}
+                </span>
+                {project.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border px-3 py-1"
+                    style={{ borderColor: `${project.accent}33` }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </aside>
       </div>
@@ -863,23 +1291,37 @@ export default function AppShell({
     setSelectedId(null);
   };
 
-  const stepSlide = (direction: -1 | 1) => {
+  const stepSlide = useCallback((direction: -1 | 1) => {
     if (!selectedProject) return;
     const total = selectedProject.slides.length;
     setSlideIndex((current) => (current + direction + total) % total);
-  };
+  }, [selectedProject]);
+
+  useEffect(() => {
+    if (!selectedProject) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        stepSlide(-1);
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        stepSlide(1);
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeProject();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedProject, stepSlide]);
 
   return (
-    <main className="flex min-h-screen flex-col overflow-hidden bg-black px-6 pb-28 pt-6 text-white md:px-10 md:pb-32 md:pt-8">
-      <header className="mx-auto flex w-full max-w-7xl justify-end">
-        <button
-          type="button"
-          onClick={() => navigateSection("contact")}
-          className="bg-white px-5 py-3 font-label text-[10px] uppercase tracking-[0.28em] text-black transition-colors hover:bg-stone-200 md:px-7"
-        >
-          Speak with Us
-        </button>
-      </header>
+    <main className="site-shell relative flex min-h-screen flex-col overflow-hidden bg-transparent px-6 pb-28 pt-6 text-stone-950 md:px-10 md:pb-32 md:pt-8">
+      <header className="mx-auto flex w-full max-w-7xl justify-end" />
 
       <div key={activeSection} className="section-enter relative flex-1 min-h-0">
         {activeSection === "home" ? <HomeSection /> : null}
@@ -907,7 +1349,7 @@ export default function AppShell({
           selectedProject ? "hidden" : "opacity-100"
         }`}
       >
-        <nav className="pointer-events-auto flex items-center gap-2 bg-stone-900 px-2 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+        <nav className="pointer-events-auto flex items-center gap-2 rounded-full border border-stone-200 bg-white/90 px-2 py-2 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-md">
           {tabBar.map((item) => (
             <button
               key={item.label}
@@ -915,13 +1357,16 @@ export default function AppShell({
               aria-label={item.label}
               aria-current={activeSection === item.section ? "page" : undefined}
               onClick={() => navigateSection(item.section)}
-              className={`flex h-11 w-11 items-center justify-center transition-colors ${
+              className={`flex h-11 items-center justify-center gap-2 rounded-full px-3 transition-colors ${
                 activeSection === item.section
-                  ? "bg-stone-800 text-white"
-                  : "text-stone-400 hover:bg-stone-800 hover:text-white"
+                  ? "bg-stone-950 text-white"
+                  : "text-stone-500 hover:bg-stone-100 hover:text-stone-950"
               }`}
             >
               <span className="material-symbols-outlined">{item.icon}</span>
+              <span className="hidden font-label text-[10px] uppercase tracking-[0.22em] md:inline">
+                {item.label}
+              </span>
             </button>
           ))}
         </nav>

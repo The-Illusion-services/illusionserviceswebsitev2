@@ -1,22 +1,21 @@
 import type { Metadata } from "next";
-import { Newsreader, Space_Grotesk } from "next/font/google";
+import { Manrope, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const newsreader = Newsreader({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  style: ["normal", "italic"],
-  variable: "--font-newsreader",
+  variable: "--font-plus-jakarta-sans",
 });
 
-const spaceGrotesk = Space_Grotesk({
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  variable: "--font-manrope",
 });
 
 export const metadata: Metadata = {
-  title: "AGENCY | The Silent Partner",
+  title: "Illusion Services | Product Design and Engineering Studio",
   description:
-    "A cinematic editorial-style agency landing page built with Next.js.",
+    "Illusion Services designs and ships product experiences that launch faster, reduce handoff friction, and scale with clarity.",
 };
 
 export default function RootLayout({
@@ -25,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
@@ -33,7 +32,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${newsreader.variable} ${spaceGrotesk.variable} bg-black font-body text-white antialiased selection:bg-white selection:text-black`}
+        className={`${plusJakartaSans.variable} ${manrope.variable} bg-stone-50 font-body text-stone-950 antialiased selection:bg-stone-900 selection:text-stone-50`}
       >
         {children}
       </body>

@@ -65,9 +65,9 @@ const config: Config = {
         full: "9999px"
       },
       fontFamily: {
-        headline: ["var(--font-newsreader)"],
-        body: ["var(--font-newsreader)"],
-        label: ["var(--font-space-grotesk)"],
+        headline: ["var(--font-plus-jakarta-sans)"],
+        body: ["var(--font-plus-jakarta-sans)"],
+        label: ["var(--font-manrope)"],
       }
     },
   },
