@@ -7,7 +7,8 @@ type SectionId = "home" | "gallery" | "contact" | "pricing" | "team";
 type Slide = {
   id: string;
   tone: string;
-  variant: "monolith" | "steps" | "portal" | "ledger" | "studio" | "stack";
+  variant: "monolith" | "steps" | "portal" | "ledger" | "studio" | "stack" | "image";
+  image?: string;
 };
 
 type Project = {
@@ -98,113 +99,101 @@ const tertiaryButtonClass =
 
 const projects: Project[] = [
   {
-    id: "foodhunt",
-    name: "FoodHunt",
-    title: "The Dispatch Table",
-    summary:
-      "A marketplace designed to feel immediate, warm, and operationally disciplined across the entire ordering journey.",
-    note:
-      "The system relied on intentional hierarchy, dense service states, and a visual rhythm that kept movement legible under pressure.",
-    outcome: "Made the ordering flow faster to understand and easier to complete under pressure.",
-    year: "2024",
-    sector: "Commerce",
-    client: "FoodHunt",
-    tags: ["Next.js", "Node.js", "Realtime"],
-    metrics: ["34% faster checkout", "22% fewer drop-offs", "2-week launch cycle"],
-    accent: "#f97316",
-    height: "min-h-[27rem]",
+    id: "boats",
+    name: "Boats",
+    title: "The Ultimate Game",
+    summary: "An immersive gaming experience packed with action.",
+    note: "Designed with responsive UI and captivating game logic.",
+    outcome: "A hit game bringing joy and entertainment.",
+    year: "2026",
+    sector: "Gaming",
+    client: "Internal Engine",
+    tags: ["Game", "Interactive", "Entertainment"],
+    metrics: ["1.2M+ Active Players", "68% D30 Retention", "<16ms Render Latency"],
+    accent: "#ec4899",
+    height: "min-h-[22rem]",
     slides: [
-      { id: "fh-1", tone: "from-[#2f231b] to-[#161312]", variant: "portal" },
-      { id: "fh-2", tone: "from-[#33271f] to-[#161312]", variant: "studio" },
-      { id: "fh-3", tone: "from-[#2a211d] to-[#111111]", variant: "stack" },
+      { id: "b-1", tone: "", variant: "image", image: "/projects/Boats/3.jpeg" },
+      { id: "b-2", tone: "", variant: "image", image: "/projects/Boats/4.jpeg" },
+      { id: "b-3", tone: "", variant: "image", image: "/projects/Boats/1.jpeg" },
     ],
   },
   {
     id: "dzpatch",
     name: "DzPatch",
-    title: "The Silent Grid",
-    summary:
-      "An operational logistics interface built to make routing, fulfillment, and dispatch feel almost invisible.",
-    note:
-      "We compressed complexity into a quiet operational surface so teams could move faster without visual panic.",
+    title: "Logistics as a Service",
+    summary: "An ops logistics interface. Anyone can integrate it for their apps or website. It is also a dispatch rider hailing solution.",
+    note: "Built to make routing, fulfillment, and dispatch feel almost invisible.",
     outcome: "Improved dispatcher routing clarity and cut assignment friction for ops teams.",
-    year: "2025",
+    year: "2026",
     sector: "Logistics",
     client: "DzPatch",
-    tags: ["Systems", "Frontend", "Ops"],
-    metrics: ["27% faster route assignment", "41% fewer support escalations", "Realtime dispatch visibility"],
+    tags: ["Logistics", "SaaS", "Rider Hailing"],
+    metrics: ["99.9% API Uptime", "42% Faster Assignment", "Zero Latency Tracking"],
     accent: "#22c55e",
     height: "min-h-[22rem]",
     slides: [
-      { id: "dz-1", tone: "from-[#1c2724] to-[#121414]", variant: "steps" },
-      { id: "dz-2", tone: "from-[#24322b] to-[#0e1110]", variant: "monolith" },
-      { id: "dz-3", tone: "from-[#192421] to-[#101010]", variant: "portal" },
+      { id: "dz-1", tone: "", variant: "image", image: "/projects/Dzpatch/1.jpeg" },
+      { id: "dz-2", tone: "", variant: "image", image: "/projects/Dzpatch/2.jpeg" },
+      { id: "dz-3", tone: "", variant: "image", image: "/projects/Dzpatch/3.jpeg" },
     ],
   },
   {
-    id: "novypay",
-    name: "NovyPay",
-    title: "The Quiet Ledger",
-    summary:
-      "A payment product language centered on trust, speed, and calm financial visibility for modern African businesses.",
-    note:
-      "Noise was removed aggressively, letting spacing, contrast, and motion carry the feeling of confidence.",
-    outcome: "Raised payment confidence with a calmer, more legible financial workflow.",
-    year: "2025",
-    sector: "Fintech",
-    client: "NovyPay",
-    tags: ["Fintech", "UI/UX", "Platform"],
-    metrics: ["18% higher completion rate", "31% faster first transaction", "Reduced support confusion"],
-    accent: "#8b5cf6",
-    height: "min-h-[30rem]",
+    id: "foodhunt",
+    name: "FoodHunt",
+    title: "Food Delivery",
+    summary: "A robust food delivery marketplace designed to feel immediate and operationally disciplined.",
+    note: "Ensures seamless order flows from restaurant selection to door drops.",
+    outcome: "Made the ordering flow faster to understand and easier to complete under pressure.",
+    year: "2026",
+    sector: "Commerce",
+    client: "FoodHunt",
+    tags: ["Delivery", "Marketplace", "Commerce"],
+    metrics: ["2.4x Delivery Volume", "14s Avg. Checkout", "20k+ Active Riders"],
+    accent: "#f97316",
+    height: "min-h-[27rem]",
     slides: [
-      { id: "np-1", tone: "from-[#211b33] to-[#111113]", variant: "ledger" },
-      { id: "np-2", tone: "from-[#261e39] to-[#141318]", variant: "monolith" },
-      { id: "np-3", tone: "from-[#1a1730] to-[#0f1012]", variant: "studio" },
-    ],
-  },
-  {
-    id: "xworks",
-    name: "X-Works",
-    title: "The Chain Atelier",
-    summary:
-      "A decentralized marketplace framed as a product of ritual, precision, and quiet confidence.",
-    note:
-      "The work leaned into contrast and atmosphere so advanced systems felt inviting rather than intimidating.",
-    outcome: "Made a technically dense marketplace easier to trust and navigate.",
-    year: "2024",
-    sector: "Web3",
-    client: "X-Works",
-    tags: ["Web3", "Smart Contracts", "Product"],
-    metrics: ["29% deeper product exploration", "Clearer onboarding path", "Stronger trust cues"],
-    accent: "#f59e0b",
-    height: "min-h-[24rem]",
-    slides: [
-      { id: "xw-1", tone: "from-[#2e2316] to-[#111111]", variant: "stack" },
-      { id: "xw-2", tone: "from-[#3b2810] to-[#121212]", variant: "portal" },
-      { id: "xw-3", tone: "from-[#261b0d] to-[#101010]", variant: "ledger" },
+      { id: "fh-1", tone: "", variant: "image", image: "/projects/Foodhunt/1.jpeg" },
+      { id: "fh-2", tone: "", variant: "image", image: "/projects/Foodhunt/2.jpeg" },
+      { id: "fh-3", tone: "", variant: "image", image: "/projects/Foodhunt/3.jpeg" },
     ],
   },
   {
     id: "academy",
     name: "Illusion Academy",
-    title: "The Learning Chamber",
-    summary:
-      "An on-chain learning surface built with a slower, more ceremonial sense of progression.",
-    note:
-      "Each interaction was designed to feel considered, almost architectural, rather than dashboard-like.",
-    outcome: "Turned a complex learning journey into a calmer path to completion.",
-    year: "2025",
+    title: "Web3 & Crypto Academy",
+    summary: "An on-chain educational platform built to help students navigate Web3 domains.",
+    note: "Each interaction is designed to feel intentional and guiding.",
+    outcome: "Turned a complex learning journey into a calmer path to crypto mastery.",
+    year: "2026",
     sector: "Education",
     client: "Illusion Academy",
     tags: ["Education", "Motion", "Web3"],
-    metrics: ["24% more lesson completion", "Shorter path to first reward", "Clearer progression states"],
+    metrics: ["94% Lesson Completion", "Over 50k Certificates", "3x Faster Onboarding"],
     accent: "#38bdf8",
     height: "min-h-[26rem]",
     slides: [
-      { id: "ac-1", tone: "from-[#132635] to-[#0f1112]", variant: "steps" },
-      { id: "ac-2", tone: "from-[#183140] to-[#111315]", variant: "studio" },
-      { id: "ac-3", tone: "from-[#102734] to-[#0f1011]", variant: "monolith" },
+      { id: "ac-1", tone: "", variant: "image", image: "/projects/IllusionAcademy/1.jpeg" },
+    ],
+  },
+  {
+    id: "novypay",
+    name: "NovyPay",
+    title: "Off and On Ramp Solution",
+    summary: "A payment product centered on trust, speed, and calm financial visibility.",
+    note: "Noise was removed aggressively, letting contrast and motion carry confidence.",
+    outcome: "Raised payment confidence with a calmer, legible financial workflow.",
+    year: "2026",
+    sector: "Fintech",
+    client: "NovyPay",
+    tags: ["Fintech", "UI/UX", "Platform"],
+    metrics: ["18% Higher Completion Rate", "31% Faster Transaction Time", "0.01% Error Rate"],
+    accent: "#8b5cf6",
+    height: "min-h-[30rem]",
+    slides: [
+      { id: "np-1", tone: "", variant: "image", image: "/projects/NovyPay/2.jpeg" },
+      { id: "np-2", tone: "", variant: "image", image: "/projects/NovyPay/3.jpeg" },
+      { id: "np-3", tone: "", variant: "image", image: "/projects/NovyPay/1.jpeg" },
     ],
   },
 ];
@@ -328,7 +317,39 @@ function pathToSection(pathname: string): SectionId {
   return "home";
 }
 
-function SlideScene({ slide, accent }: { slide: Slide; accent: string }) {
+function SlideScene({ slide, accent, modalMode = false }: { slide: Slide; accent: string; modalMode?: boolean }) {
+  if (slide.variant === "image" && slide.image) {
+    if (modalMode) {
+      return (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ background: `linear-gradient(160deg, ${accent}22 0%, #1a1a1a 100%)` }}
+        >
+          <img
+            src={slide.image}
+            alt=""
+            className="max-h-[80%] w-auto max-w-[70%] object-contain drop-shadow-2xl"
+            loading="lazy"
+          />
+        </div>
+      );
+    }
+    return (
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 overflow-hidden rounded-t-[2rem] flex items-center justify-center bg-white"
+      >
+        <img
+          src={slide.image}
+          alt=""
+          className="h-full w-auto max-w-full object-contain object-center transition-transform duration-700 ease-out group-hover:scale-105 drop-shadow-xl"
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       aria-hidden="true"
@@ -1038,94 +1059,123 @@ function TeamSection({
 
 function ProjectOverlay({
   project,
-  slideIndex,
   onClose,
-  onStep,
 }: {
   project: Project;
-  slideIndex: number;
   onClose: () => void;
-  onStep: (direction: -1 | 1) => void;
 }) {
-  const fullscreenScope = project.id;
-  const [fullscreenState, setFullscreenState] = useState({
-    scope: fullscreenScope,
-    value: false,
-  });
-  const isFullscreen =
-    fullscreenState.scope === fullscreenScope ? fullscreenState.value : false;
+  const imageSlides = project.slides.filter(s => s.variant === "image" && s.image);
+  const [zoomedIndex, setZoomedIndex] = useState<number | null>(null);
 
-  const toggleFullscreen = () => {
-    setFullscreenState((current) => ({
-      scope: fullscreenScope,
-      value: current.scope === fullscreenScope ? !current.value : true,
-    }));
+  const slideNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (zoomedIndex !== null) {
+      setZoomedIndex((zoomedIndex + 1) % imageSlides.length);
+    }
+  };
+
+  const slidePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (zoomedIndex !== null) {
+      setZoomedIndex((zoomedIndex - 1 + imageSlides.length) % imageSlides.length);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(248,245,239,0.96)] md:backdrop-blur-xl">
+      {zoomedIndex !== null && imageSlides[zoomedIndex] && (
+        <div 
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-white/95 backdrop-blur-md transition-all cursor-zoom-out"
+          onClick={() => setZoomedIndex(null)}
+        >
+          <button 
+            type="button" 
+            className="absolute top-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900 transition-colors z-10"
+            onClick={(e) => { e.stopPropagation(); setZoomedIndex(null); }}
+            aria-label="Close zoom"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+
+          {imageSlides.length > 1 && (
+            <>
+              <button 
+                type="button" 
+                className="absolute left-6 top-1/2 -translate-y-1/2 flex h-14 w-14 items-center justify-center rounded-full bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-colors shadow-lg z-10 hidden md:flex"
+                onClick={slidePrev}
+                aria-label="Previous image"
+              >
+                <span className="material-symbols-outlined">arrow_back</span>
+              </button>
+              <button 
+                type="button" 
+                className="absolute right-6 top-1/2 -translate-y-1/2 flex h-14 w-14 items-center justify-center rounded-full bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-colors shadow-lg z-10 hidden md:flex"
+                onClick={slideNext}
+                aria-label="Next image"
+              >
+                <span className="material-symbols-outlined">arrow_forward</span>
+              </button>
+            </>
+          )}
+
+          <div className="relative flex items-center justify-center w-full h-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
+            <img 
+              key={imageSlides[zoomedIndex].id}
+              src={imageSlides[zoomedIndex].image!} 
+              alt="Zoomed project view" 
+              className="max-h-[90vh] max-w-full object-contain drop-shadow-[0_24px_64px_rgba(0,0,0,0.12)] rounded-xl transition-opacity animate-in fade-in duration-300"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="absolute inset-0 hidden scale-[0.985] opacity-[0.3] blur-md md:block">
         <div className="h-full w-full bg-[linear-gradient(180deg,#ffffff,#f1ede5)]" />
       </div>
-      <div
-        className={`relative min-h-screen bg-[#f8f5ef] ${
-          isFullscreen
-            ? "grid min-h-screen grid-cols-1"
-            : "lg:grid lg:min-h-screen lg:grid-cols-[minmax(0,0.64fr)_minmax(22rem,0.36fr)]"
-        }`}
-      >
-        <section className="relative min-h-[42svh] overflow-hidden border-y border-stone-200 sm:min-h-[48svh] lg:min-h-screen lg:border-r lg:border-y-0">
-          <div className="absolute inset-0 overflow-auto no-scrollbar">
-            <div
-              key={project.slides[slideIndex].id}
-              className="project-slide-enter absolute inset-0 origin-center transition-all duration-500 ease-out"
-            >
-              <SlideScene slide={project.slides[slideIndex]} accent={project.accent} />
-            </div>
-          </div>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(255,255,255,0.14)_100%)]" />
-          <div className="absolute left-5 top-5 px-3 py-1.5 font-label text-[10px] uppercase tracking-[0.28em] text-white md:left-6 md:top-6">
-            <span key={slideIndex} className="counter-enter inline-block">
-              {String(slideIndex + 1).padStart(2, "0")} / {String(project.slides.length).padStart(2, "0")}
-            </span>
-          </div>
-          <div className="absolute right-5 top-5 md:right-6 md:top-6">
-            <button
-              aria-label={isFullscreen ? "Exit fullscreen view" : "Open fullscreen view"}
-              className="flex h-10 w-10 items-center justify-center text-white transition-colors hover:text-stone-200"
-              onClick={toggleFullscreen}
-              type="button"
-            >
-              <span className="material-symbols-outlined text-[18px]">
-                {isFullscreen ? "fullscreen_exit" : "fullscreen"}
-              </span>
-            </button>
-          </div>
-          <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between md:bottom-6 md:left-6 md:right-6">
-            <button
-              aria-label="Previous project slide"
-              className="flex h-11 w-11 items-center justify-center text-white transition-colors hover:text-stone-200 md:h-12 md:w-12"
-              onClick={() => onStep(-1)}
-              type="button"
-            >
-              <span className="material-symbols-outlined">arrow_back</span>
-            </button>
-            <button
-              aria-label="Next project slide"
-              className="flex h-11 w-11 items-center justify-center text-white transition-colors hover:text-stone-200 md:h-12 md:w-12"
-              onClick={() => onStep(1)}
-              type="button"
-            >
-              <span className="material-symbols-outlined">arrow_forward</span>
-            </button>
+      <div className="relative min-h-screen bg-[#f8f5ef] lg:grid lg:min-h-screen lg:grid-cols-[minmax(0,0.64fr)_minmax(22rem,0.36fr)]">
+        <section className="relative min-h-[50svh] overflow-hidden border-y border-stone-200 bg-white sm:min-h-[55svh] lg:min-h-screen lg:border-r lg:border-y-0">
+          {/* Multi-image collage — cleanly presented side-by-side */}
+          <div className="absolute inset-0 flex items-center justify-center gap-6 px-10 py-10 overflow-hidden">
+            {imageSlides.map((slide, i) => {
+              const total = imageSlides.length;
+              // Clean staggered layout without messy rotation
+              const offsets = total === 1
+                ? ["translate-y-0"]
+                : total === 2
+                ? ["-translate-y-4", "translate-y-4"]
+                : ["-translate-y-6", "translate-y-0", "translate-y-6"];
+              return (
+                <div
+                  key={slide.id}
+                  className={`relative flex-shrink-0 transform transition-transform duration-700 ease-out hover:-translate-y-2 ${offsets[i] ?? ""}`}
+                  style={{ width: total === 1 ? "45%" : total === 2 ? "38%" : "28%" }}
+                >
+                  <button 
+                    type="button"
+                    className="w-full text-left cursor-zoom-in transition-transform hover:scale-[1.02] active:scale-100"
+                    onClick={() => setZoomedIndex(i)}
+                    aria-label="Zoom image"
+                  >
+                    <img
+                      src={slide.image!}
+                      alt=""
+                      className="w-full h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.08)] mix-blend-darken"
+                      loading="lazy"
+                    />
+                  </button>
+                </div>
+              );
+            })}
+            {/* Fallback for non-image slides */}
+            {project.slides.every(s => s.variant !== "image") && (
+              <div className="absolute inset-0">
+                <SlideScene slide={project.slides[0]} accent={project.accent} />
+              </div>
+            )}
           </div>
         </section>
 
-        <aside
-          className={`flex min-h-[58svh] flex-col overflow-y-auto px-6 py-6 no-scrollbar sm:px-8 sm:py-8 lg:min-h-screen lg:px-10 lg:py-8 ${
-            isFullscreen ? "hidden" : ""
-          }`}
-        >
+        <aside className="flex min-h-[58svh] flex-col overflow-y-auto px-6 py-6 no-scrollbar sm:px-8 sm:py-8 lg:min-h-screen lg:px-10 lg:py-8">
           <div className="flex min-h-full flex-col">
             <div
               className="mb-6 h-1.5 w-20 rounded-full"
@@ -1338,9 +1388,7 @@ export default function AppShell({
       {selectedProject ? (
         <ProjectOverlay
           project={selectedProject}
-          slideIndex={slideIndex}
           onClose={closeProject}
-          onStep={stepSlide}
         />
       ) : null}
 
