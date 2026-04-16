@@ -732,12 +732,20 @@ function ContactSection() {
     setSubmitState("submitting");
 
     try {
-      const response = await fetch("/api/send", {
+      const response = await fetch("https://formspree.io/f/mjgjyypp", {
         method: "POST",
         headers: {
+          Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          projectType: form.projectType,
+          budget: form.budget,
+          message: form.message,
+          _subject: `New Inquiry from ${form.name}${form.projectType ? `: ${form.projectType}` : ""}`,
+        }),
       });
 
       if (!response.ok) {
