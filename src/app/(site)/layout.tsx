@@ -13,7 +13,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Illusion Services | Product Design and Engineering Studio",
+  title: "Illusion Services",
   description:
     "Illusion Services designs and ships product experiences that launch faster, reduce handoff friction, and scale with clarity.",
 };
@@ -32,7 +32,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${plusJakartaSans.variable} ${manrope.variable} bg-stone-50 font-body text-stone-950 antialiased selection:bg-stone-900 selection:text-stone-50`}
+        className={`${plusJakartaSans.variable} ${manrope.variable} bg-white font-body text-stone-950 antialiased selection:bg-stone-900 selection:text-stone-50`}
       >
         {children}
       </body>

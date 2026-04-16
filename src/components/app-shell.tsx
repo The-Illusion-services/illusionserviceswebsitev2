@@ -1,8 +1,31 @@
 "use client";
 
 import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import { client } from "@/sanity/lib/client";
+import { urlFor } from "@/sanity/lib/image";
+import { PortableText } from "@portabletext/react";
 
-type SectionId = "home" | "gallery" | "contact" | "pricing" | "team";
+type Category = {
+  _id: string;
+  title: string;
+};
+
+type Post = {
+  _id: string;
+  title: string;
+  slug: { current: string };
+  mainImage?: any;
+  publishedAt: string;
+  body: any;
+  tags?: string[];
+  categories?: Category[];
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+  };
+};
+
+type SectionId = "home" | "gallery" | "contact" | "pricing" | "team" | "insights";
 
 type Slide = {
   id: string;
@@ -57,6 +80,7 @@ type ContactFormState = {
   name: string;
   email: string;
   projectType: string;
+  budget: string;
   message: string;
 };
 
@@ -75,6 +99,7 @@ type AppShellProps = {
 const sectionPathMap: Record<SectionId, string> = {
   home: "/",
   gallery: "/gallery",
+  insights: "/insights",
   contact: "/contact",
   pricing: "/pricing",
   team: "/team",
@@ -83,6 +108,7 @@ const sectionPathMap: Record<SectionId, string> = {
 const tabBar: Array<{ section: SectionId; label: string; icon: string }> = [
   { section: "home", label: "Home", icon: "home" },
   { section: "gallery", label: "Portfolio", icon: "photo_library" },
+  { section: "insights", label: "Insights", icon: "article" },
   { section: "contact", label: "Contact Us", icon: "mail" },
   { section: "pricing", label: "Pricing", icon: "payments" },
   { section: "team", label: "Team", icon: "groups" },
@@ -101,15 +127,15 @@ const projects: Project[] = [
   {
     id: "boats",
     name: "Boats",
-    title: "The Ultimate Game",
-    summary: "An immersive gaming experience packed with action.",
-    note: "Designed with responsive UI and captivating game logic.",
-    outcome: "A hit game bringing joy and entertainment.",
+    title: "RPG Game",
+    summary: "We built an immersive gaming experience that actually feels good to play.",
+    note: "It's responsive, handles action without lag, and works on whatever device you're holding.",
+    outcome: "People stayed because it was fun and it never felt slow.",
     year: "2026",
     sector: "Gaming",
     client: "Internal Engine",
-    tags: ["Game", "Interactive", "Entertainment"],
-    metrics: ["1.2M+ Active Players", "68% D30 Retention", "<16ms Render Latency"],
+    tags: ["Motion", "Interactive", "Engine"],
+    metrics: ["1.2M+ Concurrent Sessions", "68% Day-30 Retention", "Sub-16ms Frame Latency"],
     accent: "#ec4899",
     height: "min-h-[22rem]",
     slides: [
@@ -206,8 +232,7 @@ const socials: ContactLink[] = [
 ];
 
 const phoneNumbers: PhoneNumber[] = [
-  { label: "Studio", href: "tel:+2348012345678", value: "+234 801 234 5678" },
-  { label: "Projects", href: "tel:+2348098765432", value: "+234 809 876 5432" },
+  { label: "Studio", href: "tel:+2348087356498", value: "+234 808 735 6498" },
 ];
 
 const plans: PricingPlan[] = [
@@ -414,9 +439,7 @@ function HomeSection() {
   return (
     <section className="mx-auto grid h-full w-full max-w-6xl gap-8 py-12 md:py-16">
       <div className="max-w-4xl">
-        <p className="font-label text-[11px] uppercase tracking-[0.3em] text-stone-500">
-          Product Design + Engineering Studio
-        </p>
+
         <h1 className="mt-4 font-headline text-[4.7rem] leading-[0.92] tracking-[-0.06em] text-stone-950 md:text-[7rem]">
           Software isn&apos;t
           <br />
@@ -424,10 +447,6 @@ function HomeSection() {
           <br />
           It&apos;s written.
         </h1>
-
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-stone-700 md:text-[1.18rem]">
-          We design and ship digital products with clarity, speed, and restraint.
-        </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
           <a
@@ -450,8 +469,8 @@ function HomeSection() {
           Who We&apos;re For
         </p>
         <p className="mt-4 max-w-4xl font-headline text-[1.35rem] leading-relaxed text-stone-700 md:text-[1.6rem]">
-          For founders shipping MVPs, brands scaling with precision, and product teams
-          building moats with long-term clarity.
+          For founders shipping MVPs. Brands scaling to new regions. Product teams
+          launching features. And leaders thinking about the numbers.
         </p>
       </div>
     </section>
@@ -468,21 +487,21 @@ function GallerySection({
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-8 py-8 md:grid-cols-[0.72fr_1.28fr] md:items-start md:gap-8 md:py-10">
         <div className="max-w-lg md:sticky md:top-8">
           <h2 className="font-headline text-[3.2rem] leading-[0.96] tracking-[-0.045em] text-stone-950 md:text-[3.9rem] xl:text-[4.3rem]">
-            Selected
+            Our Portfolio
             <br />
-            <span className="text-stone-500">Portfolio.</span>
+            <span className="text-stone-500">is the Thesis.</span>
           </h2>
           <p className="mt-6 max-w-sm border-l border-stone-300 pl-5 text-[1.02rem] leading-relaxed text-stone-600 md:ml-8">
             Open one and the story unfolds.
           </p>
         </div>
 
-        <div className="columns-1 gap-5 space-y-5 md:columns-2 xl:columns-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {projects.map((project) => (
             <button
               key={project.id}
               aria-label={`Open ${project.name} project details`}
-              className={`group mb-4 block w-full break-inside-avoid overflow-hidden rounded-[2rem] border border-stone-200 bg-white text-left shadow-[0_24px_60px_rgba(15,23,42,0.06)] transition-transform duration-300 hover:-translate-y-1 hover:border-stone-300 hover:bg-stone-50 ${project.height}`}
+              className={`group block w-full overflow-hidden rounded-[2rem] border border-stone-200 bg-white text-left shadow-[0_24px_60px_rgba(15,23,42,0.06)] transition-transform duration-300 hover:-translate-y-1 hover:border-stone-300 hover:bg-stone-50 ${project.height}`}
               onClick={() => onOpenProject(project.id)}
               style={{ contentVisibility: "auto", containIntrinsicSize: "440px" }}
               type="button"
@@ -511,9 +530,6 @@ function GallerySection({
                         </span>
                       ))}
                     </div>
-                    <span className="font-label text-[11px] uppercase tracking-[0.25em] text-stone-500 transition-colors group-hover:text-stone-950">
-                      Open
-                    </span>
                   </div>
                 </div>
               </div>
@@ -525,11 +541,136 @@ function GallerySection({
   );
 }
 
+function InsightsSection({ 
+  onOpenPost 
+}: { 
+  onOpenPost: (id: string) => void 
+}) {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const data = await client.fetch(`
+          *[_type == "post"] | order(publishedAt desc) {
+            _id,
+            title,
+            slug,
+            mainImage,
+            publishedAt,
+            tags,
+            categories[]->{
+              _id,
+              title
+            }
+          }
+        `);
+        setPosts(data);
+      } catch (error) {
+        console.error("Failed to fetch insights:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  return (
+    <section className="h-full overflow-y-auto no-scrollbar">
+      <div className="mx-auto grid w-full max-w-7xl gap-8 py-8 md:grid-cols-[0.7fr_1.3fr] md:items-start md:py-10">
+        <div className="max-w-md md:sticky md:top-8">
+          <p className="font-label text-[11px] tracking-[0.18em] text-stone-500">
+            Insights
+          </p>
+          <h2 className="mt-4 font-headline text-[2.8rem] leading-[0.95] tracking-[-0.045em] text-stone-950 md:text-[3.4rem] xl:text-[3.8rem]">
+            Deliberate
+            <br />
+            thoughts.
+          </h2>
+          <p className="mt-5 border-l border-stone-300 pl-4 text-[0.98rem] leading-relaxed text-stone-600 md:pl-5">
+            A collection of notes on design, engineering, and the business of shipping products.
+          </p>
+        </div>
+
+        <div className="grid gap-6">
+          {loading ? (
+            <div className="flex h-64 items-center justify-center rounded-[2rem] border border-stone-200 bg-stone-50">
+              <p className="font-label text-[11px] uppercase tracking-[0.2em] text-stone-400">Loading insights...</p>
+            </div>
+          ) : posts.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {posts.map((post) => (
+                <button
+                  key={post._id}
+                  onClick={() => onOpenPost(post._id)}
+                  className="group flex flex-col overflow-hidden rounded-[2rem] border border-stone-200 bg-white text-left shadow-[0_24px_60px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-stone-300"
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
+                    {post.mainImage ? (
+                      <img
+                        src={urlFor(post.mainImage).width(800).url()}
+                        alt={post.title}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <span className="material-symbols-outlined text-[48px] text-stone-200">
+                          article
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-6">
+                    <div className="flex items-center gap-3">
+                      <span className="font-label text-[10px] uppercase tracking-[0.15em] text-stone-400">
+                        {new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                      {post.categories?.[0] && (
+                        <span className="h-1 w-1 rounded-full bg-stone-300" />
+                      )}
+                      <span className="font-label text-[10px] uppercase tracking-[0.15em] text-stone-500">
+                        {post.categories?.[0]?.title}
+                      </span>
+                    </div>
+                    <h3 className="mt-3 font-headline text-2xl leading-tight text-stone-950 group-hover:text-stone-700">
+                      {post.title}
+                    </h3>
+                    <div className="mt-auto pt-6 flex flex-wrap gap-2">
+                      {post.tags?.slice(0, 2).map(tag => (
+                        <span key={tag} className="rounded-full border border-stone-100 bg-stone-50 px-2.5 py-1 font-label text-[9px] uppercase tracking-[0.12em] text-stone-400">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex h-64 flex-col items-center justify-center rounded-[2rem] border border-stone-200 bg-stone-50 p-12 text-center">
+              <span className="material-symbols-outlined text-[48px] text-stone-300">
+                auto_stories
+              </span>
+              <p className="mt-4 font-headline text-xl text-stone-950">Writing in progress.</p>
+              <p className="mt-2 text-sm text-stone-500">
+                Check back soon for our latest thoughts.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ContactSection() {
   const [form, setForm] = useState<ContactFormState>({
     name: "",
     email: "",
     projectType: "",
+    budget: "",
     message: "",
   });
   const [errors, setErrors] = useState<ContactFormErrors>({});
@@ -571,13 +712,14 @@ function ContactSection() {
     }));
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const nextErrors = validateForm(form);
     setTouched({
       name: true,
       email: true,
       projectType: true,
+      budget: true,
       message: true,
     });
     setErrors(nextErrors);
@@ -588,21 +730,34 @@ function ContactSection() {
     }
 
     setSubmitState("submitting");
-    const subject = encodeURIComponent(
-      `New inquiry${form.projectType ? `: ${form.projectType}` : ""}`,
-    );
-    const body = encodeURIComponent(
-      [
-        `Name: ${form.name || "-"}`,
-        `Email: ${form.email || "-"}`,
-        `Project Type: ${form.projectType || "-"}`,
-        "",
-        form.message || "-",
-      ].join("\n"),
-    );
 
-    setSubmitState("success");
-    window.location.href = `mailto:hello@illusionservices.com?subject=${subject}&body=${body}`;
+    try {
+      const response = await fetch("/api/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+
+      setSubmitState("success");
+      setForm({
+        name: "",
+        email: "",
+        projectType: "",
+        budget: "",
+        message: "",
+      });
+      setTouched({});
+    } catch (error) {
+      console.error("Submission error:", error);
+      setSubmitState("idle");
+      alert("Something went wrong. Please try again or email us directly.");
+    }
   };
 
   return (
@@ -618,14 +773,14 @@ function ContactSection() {
             it clear.
           </h2>
           <p className="mt-4 max-w-xl border-l border-stone-300 pl-4 text-[0.98rem] leading-relaxed text-stone-600 md:pl-5">
-            Send the brief. We&apos;ll shape scope, timeline, and next steps within 48 hours.
+            Send the brief. We&apos;ll shape scope, timeline, and next steps within 24 hours.
           </p>
 
           <form className="mt-8 grid flex-1 grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
             <label className="grid gap-2">
               <span
                 id="contact-name-label"
-                className="flex items-center justify-between gap-3 font-label text-[11px] tracking-[0.14em] text-stone-500"
+                className="flex items-center justify-between gap-3 font-label text-[11px] font-bold uppercase tracking-[0.14em] text-stone-900"
               >
                 <span>Name</span>
                 <span className="text-[10px] tracking-[0.12em] text-stone-400">Required</span>
@@ -655,7 +810,7 @@ function ContactSection() {
             <label className="grid gap-2">
               <span
                 id="contact-email-label"
-                className="flex items-center justify-between gap-3 font-label text-[11px] tracking-[0.14em] text-stone-500"
+                className="flex items-center justify-between gap-3 font-label text-[11px] font-bold uppercase tracking-[0.14em] text-stone-900"
               >
                 <span>Email</span>
                 <span className="text-[10px] tracking-[0.12em] text-stone-400">Required</span>
@@ -682,10 +837,10 @@ function ContactSection() {
               ) : null}
             </label>
 
-            <label className="grid gap-2 md:col-span-2">
+            <label className="grid gap-2">
               <span
                 id="contact-project-type-label"
-                className="flex items-center justify-between gap-3 font-label text-[11px] tracking-[0.14em] text-stone-500"
+                className="flex items-center justify-between gap-3 font-label text-[11px] font-bold uppercase tracking-[0.14em] text-stone-900"
               >
                 <span>Project Type</span>
                 <span className="text-[10px] tracking-[0.12em] text-stone-400">Optional</span>
@@ -694,7 +849,7 @@ function ContactSection() {
                 id="contact-project-type"
                 aria-labelledby="contact-project-type-label"
                 type="text"
-                placeholder="Product design, web app, platform..."
+                placeholder="Web app, design..."
                 value={form.projectType}
                 onBlur={() => markTouched("projectType")}
                 onChange={(event) =>
@@ -704,10 +859,32 @@ function ContactSection() {
               />
             </label>
 
+            <label className="grid gap-2">
+              <span
+                id="contact-budget-label"
+                className="flex items-center justify-between gap-3 font-label text-[11px] font-bold uppercase tracking-[0.14em] text-stone-900"
+              >
+                <span>Budget</span>
+                <span className="text-[10px] tracking-[0.12em] text-stone-400">Optional</span>
+              </span>
+              <input
+                id="contact-budget"
+                aria-labelledby="contact-budget-label"
+                type="text"
+                placeholder="Target budget range"
+                value={form.budget}
+                onBlur={() => markTouched("budget")}
+                onChange={(event) =>
+                  updateField("budget", event.target.value)
+                }
+                className="rounded-[1.5rem] border border-stone-200 bg-stone-50 px-4 py-3 font-body text-[0.98rem] text-stone-900 outline-none transition-all duration-300 placeholder:text-stone-400 focus:border-stone-400"
+              />
+            </label>
+
             <label className="grid gap-2 md:col-span-2">
               <span
                 id="contact-message-label"
-                className="flex items-center justify-between gap-3 font-label text-[11px] tracking-[0.14em] text-stone-500"
+                className="flex items-center justify-between gap-3 font-label text-[11px] font-bold uppercase tracking-[0.14em] text-stone-900"
               >
                 <span>Message</span>
                 <span className="text-[10px] tracking-[0.12em] text-stone-400">Required</span>
@@ -739,13 +916,12 @@ function ContactSection() {
               disabled={submitState === "submitting"}
               className={`${primaryButtonClass} mt-2 w-fit gap-3 disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2`}
             >
-              {submitState === "submitting" ? "Opening Email" : "Let's Talk"}
+              {submitState === "submitting" ? "Sending..." : "Let's Talk"}
               <span className="material-symbols-outlined text-[18px]">north_east</span>
             </button>
             {submitState === "success" ? (
-              <p aria-live="polite" className="md:col-span-2 text-[0.92rem] leading-6 text-stone-500">
-                Your email app should open with the brief filled in. If it doesn&apos;t,
-                write us at hello@illusionservices.com.
+              <p aria-live="polite" className="md:col-span-2 text-[0.92rem] leading-6 text-stone-900 font-headline bg-stone-50 p-4 rounded-2xl border border-stone-200">
+                Inquiry received. We&apos;ll be in touch within 24 hours.
               </p>
             ) : null}
           </form>
@@ -758,16 +934,10 @@ function ContactSection() {
             </p>
             <div className="mt-4 space-y-3">
               <a
-                href="mailto:hello@illusionservices.com"
+                href="mailto:theillusionservices@gmail.com"
                 className="block font-headline text-[1.15rem] text-stone-950 transition-colors hover:text-stone-600 xl:text-[1.3rem]"
               >
-                hello@illusionservices.com
-              </a>
-              <a
-                href="mailto:projects@illusionservices.com"
-                className="block font-headline text-[0.95rem] italic text-stone-500 transition-colors hover:text-stone-900"
-              >
-                projects@illusionservices.com
+                theillusionservices@gmail.com
               </a>
             </div>
           </div>
@@ -961,8 +1131,8 @@ function TeamSection({
 }) {
   return (
     <section className="h-full overflow-y-auto no-scrollbar md:overflow-hidden">
-      <div className="mx-auto grid h-full w-full max-w-7xl gap-8 py-8 md:grid-cols-[0.8fr_1.2fr] md:items-center md:py-10">
-        <div className="max-w-2xl">
+      <div className="mx-auto grid h-full w-full max-w-7xl gap-8 py-8 md:grid-cols-[0.8fr_1.2fr] md:items-start md:py-10">
+        <div className="max-w-2xl md:sticky md:top-8">
           <p className="font-label text-[11px] tracking-[0.18em] text-stone-500">
             Team
           </p>
@@ -977,9 +1147,6 @@ function TeamSection({
           </p>
           <p className="mt-4 max-w-xl text-[0.95rem] leading-7 text-stone-500">
             Work spans commerce, logistics, fintech, web3, and education.
-          </p>
-          <p className="mt-4 max-w-xl text-[0.95rem] leading-7 text-stone-500">
-            Placeholder credentials and profile links are shown here for design review and can be replaced with final bios later.
           </p>
           <button
             type="button"
@@ -1082,7 +1249,7 @@ function ProjectOverlay({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(248,245,239,0.96)] md:backdrop-blur-xl">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(255,255,255,0.96)] md:backdrop-blur-xl">
       {zoomedIndex !== null && imageSlides[zoomedIndex] && (
         <div 
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-white/95 backdrop-blur-md transition-all cursor-zoom-out"
@@ -1132,7 +1299,7 @@ function ProjectOverlay({
       <div className="absolute inset-0 hidden scale-[0.985] opacity-[0.3] blur-md md:block">
         <div className="h-full w-full bg-[linear-gradient(180deg,#ffffff,#f1ede5)]" />
       </div>
-      <div className="relative min-h-screen bg-[#f8f5ef] lg:grid lg:min-h-screen lg:grid-cols-[minmax(0,0.64fr)_minmax(22rem,0.36fr)]">
+      <div className="relative min-h-screen bg-white lg:grid lg:min-h-screen lg:grid-cols-[minmax(0,0.64fr)_minmax(22rem,0.36fr)]">
         <section className="relative min-h-[50svh] overflow-hidden border-y border-stone-200 bg-white sm:min-h-[55svh] lg:min-h-screen lg:border-r lg:border-y-0">
           {/* Multi-image collage — cleanly presented side-by-side */}
           <div className="absolute inset-0 flex items-center justify-center gap-6 px-10 py-10 overflow-hidden">
@@ -1249,9 +1416,6 @@ function ProjectOverlay({
                   </div>
                 ))}
               </div>
-              <p className="mt-4 text-[0.85rem] leading-6 text-stone-400">
-                Placeholder case-study metrics for design review. Replace with verified results before launch.
-              </p>
             </div>
 
             <div className="mt-8 border-t border-stone-200 pt-5">
@@ -1283,16 +1447,116 @@ function ProjectOverlay({
   );
 }
 
+function PostOverlay({
+  post,
+  onClose,
+}: {
+  post: Post;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-white">
+      <div className="mx-auto min-h-screen max-w-4xl px-6 py-12 md:px-10 md:py-16">
+        <header className="mb-12 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="font-label text-[11px] uppercase tracking-[0.2em] text-stone-400">
+              {new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </span>
+            <span className="h-1 w-1 rounded-full bg-stone-200" />
+            <span className="font-label text-[11px] uppercase tracking-[0.2em] text-stone-500">
+              {post.categories?.[0]?.title}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className={`${tertiaryButtonClass} gap-2`}
+            type="button"
+          >
+            Close
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </header>
+
+        <article className="prose prose-stone max-w-none">
+          <h1 className="font-headline text-[3rem] leading-[0.95] tracking-[-0.05em] text-stone-950 md:text-[4rem]">
+            {post.title}
+          </h1>
+
+          {post.mainImage && (
+            <div className="my-12 overflow-hidden rounded-[2.5rem] bg-stone-50">
+              <img
+                src={urlFor(post.mainImage).width(1600).url()}
+                alt={post.title}
+                className="w-full object-cover"
+              />
+            </div>
+          )}
+
+          <div className="rich-text font-body text-[1.1rem] leading-relaxed text-stone-700 md:text-[1.2rem]">
+            <PortableText 
+              value={post.body} 
+              components={{
+                block: {
+                  h2: ({children}) => <h2 className="mt-12 mb-6 font-headline text-4xl text-stone-950">{children}</h2>,
+                  h3: ({children}) => <h3 className="mt-10 mb-4 font-headline text-3xl text-stone-950">{children}</h3>,
+                  normal: ({children}) => <p className="mb-6">{children}</p>,
+                },
+                types: {
+                  image: ({value}) => (
+                    <figure className="my-12 overflow-hidden rounded-[2rem] bg-stone-50">
+                      <img
+                        src={urlFor(value).width(1200).url()}
+                        alt={value.alt || ''}
+                        className="w-full"
+                      />
+                      {value.caption && <figcaption className="p-4 text-center text-sm text-stone-400">{value.caption}</figcaption>}
+                    </figure>
+                  )
+                }
+              }}
+            />
+          </div>
+
+          <footer className="mt-16 border-t border-stone-100 pt-10">
+            <div className="flex flex-wrap gap-3">
+              {post.tags?.map(tag => (
+                <span key={tag} className="rounded-full border border-stone-100 bg-stone-50 px-4 py-2 font-label text-[11px] uppercase tracking-[0.15em] text-stone-500">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </footer>
+        </article>
+      </div>
+    </div>
+  );
+}
+
 export default function AppShell({
   initialSection = "home",
 }: AppShellProps) {
   const [activeSection, setActiveSection] = useState<SectionId>(initialSection);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [slideIndex, setSlideIndex] = useState(0);
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === selectedId) ?? null,
     [selectedId],
+  );
+
+  const [posts, setPosts] = useState<Post[]>([]);
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const data = await client.fetch('*[_type == "post"]');
+      setPosts(data);
+    };
+    fetchPosts();
+  }, []);
+
+  const selectedPost = useMemo(
+    () => posts.find((post) => post._id === selectedPostId) ?? null,
+    [selectedPostId, posts],
   );
 
   useEffect(() => {
@@ -1303,6 +1567,9 @@ export default function AppShell({
         if (nextSection !== "gallery") {
           setSelectedId(null);
           setSlideIndex(0);
+        }
+        if (nextSection !== "insights") {
+          setSelectedPostId(null);
         }
       });
     };
@@ -1319,6 +1586,9 @@ export default function AppShell({
       if (section !== "gallery") {
         setSelectedId(null);
         setSlideIndex(0);
+      }
+      if (section !== "insights") {
+        setSelectedPostId(null);
       }
     });
 
@@ -1339,6 +1609,17 @@ export default function AppShell({
   const closeProject = () => {
     setSlideIndex(0);
     setSelectedId(null);
+  };
+
+  const openPost = (id: string) => {
+    setSelectedPostId(id);
+    if (activeSection !== "insights") {
+      navigateSection("insights");
+    }
+  };
+
+  const closePost = () => {
+    setSelectedPostId(null);
   };
 
   const stepSlide = useCallback((direction: -1 | 1) => {
@@ -1378,6 +1659,9 @@ export default function AppShell({
         {activeSection === "gallery" ? (
           <GallerySection onOpenProject={openProject} />
         ) : null}
+        {activeSection === "insights" ? (
+          <InsightsSection onOpenPost={openPost} />
+        ) : null}
         {activeSection === "contact" ? <ContactSection /> : null}
         {activeSection === "pricing" ? (
           <PricingSection onNavigate={navigateSection} />
@@ -1392,9 +1676,16 @@ export default function AppShell({
         />
       ) : null}
 
+      {selectedPost ? (
+        <PostOverlay
+          post={selectedPost}
+          onClose={closePost}
+        />
+      ) : null}
+
       <div
         className={`pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-6 transition-opacity duration-300 md:bottom-8 md:px-10 ${
-          selectedProject ? "hidden" : "opacity-100"
+          selectedProject || selectedPost ? "hidden" : "opacity-100"
         }`}
       >
         <nav className="pointer-events-auto flex items-center gap-2 rounded-full border border-stone-200 bg-white/90 px-2 py-2 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-md">
