@@ -10,6 +10,8 @@ https://formspree.io/f/mjgjyypp
 
 Because of that, the site does not need a Node.js server on cPanel.
 
+Sanity content can still be read by the public site. The embedded `/studio` route is not included in this static cPanel deployment; use Sanity's hosted dashboard or run Studio locally when editing content.
+
 ## Build Locally
 
 Run:
@@ -82,7 +84,7 @@ https://yourdomain.com
 https://www.yourdomain.com
 ```
 
-Enable credentials for the Studio domain if you plan to use Sanity Studio from the deployed site.
+For static cPanel hosting, the deployed site does not include `/studio`. Add your production domain for frontend Sanity reads, and use Sanity's hosted dashboard or local Studio for editing.
 
 ## Formspree
 
